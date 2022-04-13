@@ -43,7 +43,7 @@ pfb() {
     mtype="${1}"
     message="${2}"
     level=''
-    icon="${3:- }"
+    icon=' '
 
     case "$mtype" in
         info*)
@@ -76,12 +76,12 @@ pfb() {
 "
             ;;
         subheading)
-            message="${DIM}${message}
+            message=" ${DIM}${message}
 "
             ;;
         heading)
             echo
-            icon='§'
+            icon="${3:-§}"
             message=$"${BOLD}${message}
 "
             ;;
@@ -213,8 +213,7 @@ pfb_test() {
 
     PFB_DEFAULT_LOG="pfb_test"
     
-    echo
-    echo "Log levels..."
+    pfb heading "Log levels:"
     echo
     pfb info "There are only 24 hours in the day. Play hard, work hard."
     pfb warn "It's hard to be green! Deal with it!"
@@ -223,34 +222,30 @@ pfb_test() {
 
     sleep 2
 
+    pfb heading "Headings:"
     echo
-    echo "Headings..."
-    echo
-    pfb heading "Some wisdom from Dr. Seuss"
+    pfb heading "Some wisdom from Dr. Seuss" "🐸"
     pfb subheading "Be who you are and say what you feel,"
     pfb subheading "because those who mind don't matter and,"
     pfb subheading "those who matter don't mind."
 
     sleep 2
 
-    echo
-    echo "Wait for a command to run..."
+    pfb heading "Long running commands:"
     echo
     pfb_wait "Having a ten second snooze..." 'sleep 10 && date'
     pfb success "Ten second snooze successful... that feels better!"
 
     sleep 2
 
-    echo
-    echo "Prompt and answer..."
+    pfb heading "Prompt and answer:"
     echo
     pfb prompt "Is there only one way to do this?"
     pfb answer "Nope. Many"
 
     sleep 2
 
-    echo
-    echo "Select option..."
+    pfb heading "Selection from a set of options:"
     echo
     local options=("Four in Hand Necktie" "The Seven Fold Tie" "Skinny Necktie" "Bowtie" "Western Bowtie" "Bolo Tie" "Cravat" "Neckerchief" "Nothing. Can't stand anything round my neck")
     pfb prompt "Select a particular type of tie you prefer to adorn yourself with?"
