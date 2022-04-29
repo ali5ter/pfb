@@ -172,6 +172,7 @@ pfb() {
         pfb subheading "Be who you are and say what you feel,"
         pfb subheading "because those who mind don't matter and,"
         pfb subheading "those who matter don't mind."
+        pfb suggestion "This suggests some wise words to live by"
 
         sleep 2
 
@@ -242,15 +243,20 @@ pfb() {
 "
             _print_message
             ;;
+        heading)
+            echo
+            icon="${3:-§}"
+            message=$"${BOLD}${message}
+"
+            _print_message
+            ;;
         subheading)
             message=" ${DIM}${message}
 "
             _print_message
             ;;
-        heading)
-            echo
-            icon="${3:-§}"
-            message=$"${BOLD}${message}
+        suggestion)
+            message=" ${BOLD}${GREEN}${message}
 "
             _print_message
             ;;

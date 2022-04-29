@@ -27,6 +27,10 @@ Subheadings can be echoed after headings using
 
 `pfb subheading message`
 
+Not really a heading but a formatted subheading indicating a suggestion...
+
+`pfb suggestion message`
+
 ### Long running commands
 pfb can provide feedback that a command is being processed using
 
