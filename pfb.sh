@@ -185,8 +185,18 @@ pfb() {
 
         pfb heading "Prompt and answer:"
         echo
-        pfb prompt "Is there only one way to do this?"
-        pfb answer "Nope. Many"
+        default='Ask Kermit'
+        read -p "$(pfb prompt "What does it mean to be green? [$default] ")" -r
+        pfb answer "${REPLY:-$default}"
+
+        command -v fzf 1>/dev/null 2>&1 && {
+            pfb prompt "Pick a word..."
+            word=$(fzf --height=40% --layout=reverse --info=inline --border < /usr/share/dict/words)
+            cursor_up
+            erase_line
+            pfb prompt "Pick a word..."
+            pfb answer "You chose $word"
+        }
 
         sleep 2
 
@@ -230,10 +240,12 @@ pfb() {
             icon="${GREEN}?"
             message="${BOLD}$message"
             _print_message
+            save_pos
             ;;
         answer)
             message=" ${CYAN}${message}
 "
+            restore_pos
             _print_message
             ;;
         done|succ*)
