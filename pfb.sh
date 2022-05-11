@@ -220,7 +220,7 @@ pfb() {
     }
 
     mtype="${1}"
-    message="${2}"
+    message="${2:-}"
     level=''
     icon=' '
 
