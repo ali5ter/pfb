@@ -119,6 +119,12 @@ pfb() {
         return "$selected"
     }
 
+    # Echo the filename of the log file
+    _logfile() {
+        [ -d "$PFB_DEFAULT_LOG_DIR" ] || mkdir -p "$PFB_DEFAULT_LOG_DIR"
+        echo "${PFB_DEFAULT_LOG_DIR}/${PFB_DEFAULT_LOG}.log"
+    }
+
     # Print pretty spinner prompt
     # @param message to show
     # @param command to be performed
@@ -130,8 +136,7 @@ pfb() {
         spinner="/-\|"
         step=1
 
-        [ -d "$PFB_DEFAULT_LOG_DIR" ] || mkdir -p "$PFB_DEFAULT_LOG_DIR"
-        logfile="${PFB_DEFAULT_LOG_DIR}/${PFB_DEFAULT_LOG}.log"
+        logfile="$(_logfile)"
 
         echo -e "\n\$ $command" >>"$logfile"
         eval "$command" >>"$logfile" 2>&1 &
@@ -180,18 +185,20 @@ pfb() {
         echo
         pfb wait "Having a five second snooze..." 'sleep 5 && date'
         pfb success "Five second snooze successful... that feels better!"
+        pfb subheading "Commands are written to ${BOLD}$(pfb logfile)${RESET}"
 
         sleep 2
 
         pfb heading "Prompt and answer:"
         echo
-        default='Ask Kermit'
+        local default='Ask Kermit'
         read -p "$(pfb prompt "What does it mean to be green? [$default] ")" -r
         pfb answer "${REPLY:-$default}"
 
         command -v fzf 1>/dev/null 2>&1 && {
             pfb prompt "Pick a word..."
-            word=$(fzf --height=40% --layout=reverse --info=inline --border < /usr/share/dict/words)
+            # shellcheck disable=SC2155
+            local word=$(fzf --height=40% --layout=reverse --info=inline --border < /usr/share/dict/words)
             cursor_up
             erase_line
             pfb prompt "Pick a word..."
@@ -282,6 +289,9 @@ pfb() {
             ;;
         test)
             _test
+            ;;
+        logfile)
+            _logfile
             ;;
     esac
 }
