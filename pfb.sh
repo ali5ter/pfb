@@ -50,6 +50,8 @@ pfb() {
     # shellcheck disable=SC2059
     cursor_down()       { printf "${ESC}[B"; }
     # shellcheck disable=SC2059
+    line_start()        { printf "\r"; }
+    # shellcheck disable=SC2059
     erase_down()        { printf "${ESC}[J"; }
     # shellcheck disable=SC2059
     erase_line()        { printf "${ESC}[2K"; }
@@ -57,6 +59,10 @@ pfb() {
     save_pos()          { printf "${ESC}7"; }
     # shellcheck disable=SC2059
     restore_pos()       { printf "${ESC}8"; }
+    # shellcheck disable=SC2059
+    rgb_fg()            { printf "${ESC}[38;2;${1};${2};${3}m"; }
+    # shellcheck disable=SC2059
+    rgb_bg()            { printf "${ESC}[48;2;${1};${2};${3}m"; }
 
     _print_message() {
         # TODO: Consider using logger for datestamping and redirection to syslog
@@ -129,12 +135,56 @@ pfb() {
     # @param message to show
     # @param command to be performed
     _wait() {
-        local message spinner step logfile pid 
+        local message frames step logfile pid
 
         message="$1" && shift
         command="$*"
-        spinner="/-\|"
-        step=1
+
+        # Define spinner styles as arrays of frames
+        # shellcheck disable=SC2034
+        local spinner_0=( "|" "/" "-" "\\" )
+        # shellcheck disable=SC2034
+        local spinner_1=( "⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏" )
+        # shellcheck disable=SC2034
+        local spinner_2=( "⣾" "⣽" "⣻" "⢿" "⡿" "⣟" "⣯" "⣷" )
+        # shellcheck disable=SC2034
+        local spinner_3=( "⢄" "⢂" "⢁" "⡁" "⡈" "⡐" "⡠" )
+        # shellcheck disable=SC2034
+        local spinner_4=( "█" "▓" "▒" "░" )
+        # shellcheck disable=SC2034
+        local spinner_5=( "⠁" "⠂" "⠄" "⡀" "⢀" "⠠" "⠐" "⠈" )
+        # shellcheck disable=SC2034
+        local spinner_6=( "🌍" "🌎" "🌏" )
+        # shellcheck disable=SC2034
+        local spinner_7=( "🌑" "🌒" "🌓" "🌔" "🌕" "🌖" "🌗" "🌘" )
+        # shellcheck disable=SC2034
+        local spinner_8=( "∙" "●" )
+        # shellcheck disable=SC2034
+        local spinner_9=( "🌸" "💮" "🏵️" "🌹" "🥀" "🌺" "🌻" "🌼" )
+        # shellcheck disable=SC2034
+        local spinner_10=( "🌛" "🌜" "🌚" "🌝" )
+        # shellcheck disable=SC2034
+        local spinner_11=( "🌞" "🌝" )
+        # shellcheck disable=SC2034
+        local spinner_12=( "🌈" "☀️" "⛅️" "☁️" "🌧️" "⛈" )
+        # shellcheck disable=SC2034
+        local spinner_13=( "🚀" "🛸" "✈️" "🛩️" "🛫" )
+        # shellcheck disable=SC2034
+        local spinner_14=( "🙈" "🙉" "🙊" )
+        # shellcheck disable=SC2034
+        local spinner_15=( "◐" "◓" "◑" "◒" )
+        # shellcheck disable=SC2034
+        local spinner_16=( "▁" "▃" "▄" "▅" "▆" "▇" "█" "▇" "▆" "▅" "▄" "▃" )
+        # shellcheck disable=SC2034
+        local spinner_17=( "←" "↖" "↑" "↗" "→" "↘" "↓" "↙" )
+        # shellcheck disable=SC2034
+        local spinner_18=( "·" "✢" "✳" "✶" "✻" "✽" )
+
+        # Select spinner style (default: 2)
+        # Env var PFB_SPINNER_STYLE can be set to choose spinner style (0-18)
+        local style=${PFB_SPINNER_STYLE:-2}
+        eval "frames=(\"\${spinner_${style}[@]}\")"
+        step=0
 
         logfile="$(_logfile)"
 
@@ -147,11 +197,10 @@ pfb() {
         cursor_up   # because job control message was printed
         # shellcheck disable=SC2009
         while ps | grep -v grep | grep -q "$pid"; do
-            save_pos
+            line_start
             erase_line
             # shellcheck disable=SC2059
-            printf "${BOLD}${CYAN}[wait]${RESET} ${BOLD}${spinner:step++%${#spinner}:1}${RESET} ${message}${RESET}"
-            restore_pos
+            printf "${BOLD}${CYAN}[wait]${RESET} ${BOLD}${RED}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}"
             sleep 0.08
         done
         cursor_up   # because job control message was printed
@@ -172,7 +221,6 @@ pfb() {
         sleep 2
 
         pfb heading "Headings:"
-        echo
         pfb heading "Some wisdom from Dr. Seuss" "🐸"
         pfb subheading "Be who you are and say what you feel,"
         pfb subheading "because those who mind don't matter and,"
@@ -189,17 +237,53 @@ pfb() {
 
         sleep 2
 
+        pfb heading "Spinner styles:"
+        pfb subheading "Available spinner styles (set PFB_SPINNER_STYLE=N):"
+        echo
+        local spinner_names=(
+            "0: Classic"
+            "1: Braille dots"
+            "2: Braille wave (default)"
+            "3: Braille sweep"
+            "4: Blocks"
+            "5: Braille pulse"
+            "6: Earth"
+            "7: Moon phases"
+            "8: Dots"
+            "9: Flowers"
+            "10: Moon faces"
+            "11: Sun/Moon"
+            "12: Weather"
+            "13: Vehicles"
+            "14: Monkeys"
+            "15: Quadrants"
+            "16: Growing bar"
+            "17: Arrows"
+            "18: Claude code"
+        )
+        echo
+        for i in {0..18}; do
+            PFB_SPINNER_STYLE=$i 
+            pfb wait "${spinner_names[$i]}" "sleep 2" 2>/dev/null
+            echo; echo
+        done
+
+        sleep 2
+
         pfb heading "Prompt and answer:"
         echo
         local default='Ask Kermit'
         read -p "$(pfb prompt "What does it mean to be green? [$default] ")" -r
+        cursor_up
+        erase_line
+        pfb prompt "What does it mean to be green? [$default] "
         pfb answer "${REPLY:-$default}"
 
         command -v fzf 1>/dev/null 2>&1 && {
+            echo
             pfb prompt "Pick a word..."
             # shellcheck disable=SC2155
             local word=$(fzf --height=40% --layout=reverse --info=inline --border < /usr/share/dict/words)
-            cursor_up
             erase_line
             pfb prompt "Pick a word..."
             pfb answer "You chose $word"
