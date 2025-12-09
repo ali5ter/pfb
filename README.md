@@ -90,6 +90,7 @@ pfb uses ANSI/VT100 Terminal Control Escape Sequences which you can use yourself
 | cursor_down | Move the cursor to the row below |
 | line_start | Move the cursor to the beginning of the current line |
 | erase_down | Remove all content from the cursor down |
+| erase_eol | Remove all content from the cursor to the end of the line |
 | erase_line | Remove all content on the current line |
 | save_pos | Store the current position of the cursor |
 | restore_pos | Restore the position of the cursor to the last saved position |
@@ -100,8 +101,14 @@ Examples of how these area used can be seen in the pfb script.
 
 | Variable Name | Use |
 | :------- | ------- |
-| BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE | Forground colors |
-| BBLACK BRED BGREEN BYELLOW BBLUE BMAGENTA BCYAN BWHITE | Background colors |
+| BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE | Basic 8-color foreground colors |
+| BBLACK BRED BGREEN BYELLOW BBLUE BMAGENTA BCYAN BWHITE | Basic 8-color background colors |
+| INFO_COLOR | Soft blue-cyan (RGB: 100, 180, 220) for info messages |
+| WARN_COLOR | Warm amber (RGB: 255, 180, 80) for warnings |
+| ERROR_COLOR | Clear red (RGB: 240, 90, 90) for errors |
+| SUCCESS_COLOR | Fresh green (RGB: 90, 200, 120) for success |
+| SPINNER_COLOR | Claude Code orange (RGB: 215, 119, 87) for spinners |
+| PROMPT_COLOR | Bright cyan (RGB: 120, 220, 240) for prompts |
 | BOLD DIM REV RESET | Display attributes |
 
 Examples using these variables:
@@ -110,7 +117,11 @@ Examples using these variables:
 
 `echo "${REV}This is reversed text${RESET}"`
 
-Examples using RGB colors:
+`printf "${INFO_COLOR}Informational message${RESET}\n"`
+
+`printf "${SUCCESS_COLOR}Success message${RESET}\n"`
+
+Examples using RGB color functions:
 
 `printf "$(rgb_fg 215 119 87)Orange text${RESET}\n"`
 

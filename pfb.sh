@@ -34,6 +34,14 @@ pfb() {
         export RESET="$(tput sgr0)"
         # shellcheck disable=SC2155
         export ESC=$(printf "\033")
+
+        # RGB color palette (24-bit true color)
+        export INFO_COLOR="${ESC}[38;2;100;180;220m"       # Soft blue-cyan
+        export WARN_COLOR="${ESC}[38;2;255;180;80m"        # Warm amber
+        export ERROR_COLOR="${ESC}[38;2;240;90;90m"        # Clear red
+        export SUCCESS_COLOR="${ESC}[38;2;90;200;120m"     # Fresh green
+        export SPINNER_COLOR="${ESC}[38;2;215;119;87m"     # Claude Code orange
+        export PROMPT_COLOR="${ESC}[38;2;120;220;240m"     # Bright cyan
     }
     _set_ansi_vars
 
@@ -53,6 +61,8 @@ pfb() {
     line_start()        { printf "\r"; }
     # shellcheck disable=SC2059
     erase_down()        { printf "${ESC}[J"; }
+    # shellcheck disable=SC2059
+    erase_eol()        { printf "${ESC}[K"; }
     # shellcheck disable=SC2059
     erase_line()        { printf "${ESC}[2K"; }
     # shellcheck disable=SC2059
@@ -79,7 +89,7 @@ pfb() {
         # shellcheck disable=SC2059
         print_option()      { printf "  $1\n"; }
         # shellcheck disable=SC2059
-        print_selected()    { printf "${BOLD}${CYAN}> $1${RESET}\n"; }
+        print_selected()    { printf "${BOLD}${PROMPT_COLOR}> $1${RESET}\n"; }
 
         key_input() { 
             read -rs -n3 key 2>/dev/null >&2
@@ -89,7 +99,7 @@ pfb() {
         }
 
         # shellcheck disable=SC2059
-        printf "   ${CYAN}[Use arrows to move]${RESET}\n"
+        printf "   ${INFO_COLOR}[Use arrows to move]${RESET}\n"
 
         for (( i=0; i<${#options[@]}; i++ )); do echo; done
         last_row="$(get_cursor_row)"
@@ -135,7 +145,7 @@ pfb() {
     # @param message to show
     # @param command to be performed
     _wait() {
-        local message frames step logfile pid
+        local message frames step logfile pid command
 
         message="$1" && shift
         command="$*"
@@ -189,22 +199,29 @@ pfb() {
         logfile="$(_logfile)"
 
         echo -e "\n\$ $command" >>"$logfile"
-        eval "$command" >>"$logfile" 2>&1 &
+
+        # Start the command in background and immediately disown to suppress job control messages
+        { eval "$command" >>"$logfile" 2>&1 & } 2>/dev/null
         pid=$!
+        disown 2>/dev/null
+
         trap "cursor_on; stty echo; printf '\n'; exit" 2
 
         cursor_off
-        cursor_up   # because job control message was printed
-        # shellcheck disable=SC2009
-        while ps | grep -v grep | grep -q "$pid"; do
+        # Animate spinner while process is running
+        while kill -0 "$pid" 2>/dev/null; do
             line_start
             erase_line
             # shellcheck disable=SC2059
-            printf "${BOLD}${CYAN}[wait]${RESET} ${BOLD}${RED}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}"
+            printf "${BOLD}${INFO_COLOR}[wait]${RESET} ${BOLD}${SPINNER_COLOR}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}"
             sleep 0.08
         done
-        cursor_up   # because job control message was printed
-        erase_line  # so a success message can replace the wait message
+
+        # Wait for the process to fully complete
+        wait "$pid" 2>/dev/null
+
+        line_start
+        erase_line
         cursor_on
     }
 
@@ -232,6 +249,7 @@ pfb() {
         pfb heading "Long running commands:"
         echo
         pfb wait "Having a five second snooze..." 'sleep 5 && date'
+        erase_line
         pfb success "Five second snooze successful... that feels better!"
         pfb subheading "Commands are written to ${BOLD}$(pfb logfile)${RESET}"
 
@@ -239,7 +257,6 @@ pfb() {
 
         pfb heading "Spinner styles:"
         pfb subheading "Available spinner styles (set PFB_SPINNER_STYLE=N):"
-        echo
         local spinner_names=(
             "0: Classic"
             "1: Braille dots"
@@ -264,9 +281,12 @@ pfb() {
         echo
         for i in {0..18}; do
             PFB_SPINNER_STYLE=$i 
-            pfb wait "${spinner_names[$i]}" "sleep 2" 2>/dev/null
-            echo; echo
+            pfb wait "${spinner_names[$i]}" 'sleep 2'
+            cursor_off
+            erase_line
         done
+        cursor_on
+        unset PFB_SPINNER_STYLE
 
         sleep 2
 
@@ -310,38 +330,38 @@ pfb() {
 
     case "$mtype" in
         info*)
-            level="${CYAN}[info] "
+            level="${INFO_COLOR}[info] "
             message="${message}
 "
             _print_message
             ;;
         warn*)
-            level="${YELLOW}[warn] "
+            level="${WARN_COLOR}[warn] "
             message="${message}
 "
             _print_message
             ;;
         err*)
-            level="${RED}[fatal]"
+            level="${ERROR_COLOR}[fatal]"
             message="${message}
 "
             _print_message
             ;;
         prompt)
-            icon="${GREEN}?"
+            icon="${PROMPT_COLOR}?"
             message="${BOLD}$message"
             _print_message
             save_pos
             ;;
         answer)
-            message=" ${CYAN}${message}
+            message=" ${INFO_COLOR}${message}
 "
             restore_pos
             _print_message
             ;;
         done|succ*)
-            level="${GREEN}[done] "
-            icon="${GREEN}√"
+            level="${SUCCESS_COLOR}[done] "
+            icon="${SUCCESS_COLOR}√"
             message="${message}
 "
             _print_message
@@ -359,7 +379,7 @@ pfb() {
             _print_message
             ;;
         suggestion)
-            message=" ${BOLD}${GREEN}${message}
+            message=" ${BOLD}${SUCCESS_COLOR}${message}
 "
             _print_message
             ;;

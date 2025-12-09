@@ -52,7 +52,14 @@ The `wait` command implements spinner animation using arrays of frames rather th
 - This approach avoids substring extraction and handles multi-byte Unicode characters reliably
 
 ### Command Execution and Logging
-The `wait` command runs commands in background (`eval "$command" >>"$logfile" 2>&1 &`), displays animated spinner while monitoring process, then clears the line for subsequent success/error messages. All commands are logged with timestamps to `$PFB_DEFAULT_LOG_DIR/$PFB_DEFAULT_LOG.log`.
+The `wait` command runs commands in background, displays animated spinner while monitoring process, then clears the line for subsequent success/error messages. All commands are logged with timestamps to `$PFB_DEFAULT_LOG_DIR/$PFB_DEFAULT_LOG.log`.
+
+**Job Control Suppression**: To prevent bash job control messages from appearing during animation:
+- The background job is started with stderr redirected: `{ eval "$command" >>"$logfile" 2>&1 & } 2>/dev/null`
+- Immediately disowned to remove from job table: `disown 2>/dev/null`
+- Process monitoring uses `kill -0 "$pid"` to check if process is running
+- Final cleanup with `wait "$pid" 2>/dev/null` ensures proper process reaping
+- This approach completely suppresses both the initial `[1] PID` and completion `[1]+ Done` messages
 
 ## Configuration
 
@@ -77,3 +84,15 @@ This demonstrates all message types, interactive features, and spinner animation
 - The `_select_option` function traps SIGINT to restore cursor and echo on exit
 - shellcheck directives are used to suppress expected warnings for printf formatting and dynamic variable assignment
 - RGB color functions (`rgb_fg`, `rgb_bg`) provide 24-bit true color support using the format `ESC[38;2;R;G;Bm` for foreground and `ESC[48;2;R;G;Bm` for background (requires modern terminal with true color support)
+
+## Color Palette
+
+pfb uses a modern RGB color palette designed for readability and semantic meaning:
+- **INFO_COLOR** (100, 180, 220): Soft blue-cyan for informational messages, less harsh than standard cyan
+- **WARN_COLOR** (255, 180, 80): Warm amber for warnings, better contrast than pure yellow
+- **ERROR_COLOR** (240, 90, 90): Clear red for errors, slightly softened from pure red
+- **SUCCESS_COLOR** (90, 200, 120): Fresh green for success messages, modern and pleasant
+- **SPINNER_COLOR** (215, 119, 87): Claude Code's signature orange for spinner animations
+- **PROMPT_COLOR** (120, 220, 240): Bright cyan for interactive prompts
+
+The basic 8 ANSI colors are still available for backward compatibility.
