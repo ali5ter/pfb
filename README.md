@@ -60,9 +60,55 @@ pfb can provide feedback that a command is being processed using
 
 This is usefully follwed up with a pfb success log level message or a pfb answer message.
 
+### Text input
+
+Collect text input from the user with an optional default value:
+
+`result=$(pfb input "prompt message" [default_value])`
+
+Example:
+```bash
+name=$(pfb input "What's your name?" "Anonymous")
+echo "Hello, $name!"
+```
+
+The default value is shown in brackets and used if the user presses enter without typing anything.
+
+### Confirmation prompts
+
+Ask the user a yes/no question and get the result as an exit code:
+
+`pfb confirm "question"`
+
+Returns exit code 0 for yes, 1 for no. Use left/right arrow keys, y/n, or enter to select.
+
+Example:
+```bash
+if pfb confirm "Delete this file?"; then
+    rm file.txt
+    pfb success "File deleted"
+else
+    pfb info "Cancelled"
+fi
+```
+
+### Selection from a set of options
+
+pfb provides a way to select from a list of options using the up/down keys using
+
+`pfb select-from array_of_options`
+
+Example:
+```bash
+options=("Option 1" "Option 2" "Option 3")
+pfb select-from "${options[@]}"
+selected=$?
+echo "You selected: ${options[$selected]}"
+```
+
 ### Prompt and answer
 
-For a formatted prompt message use
+For integrating with external tools like fzf, use the prompt/answer pattern:
 
 `pfb prompt message`
 
@@ -70,11 +116,7 @@ The pfb answer message can be used to put a formatted answer after the prompt me
 
 `pfb answer message`
 
-### Selection from a set of options
-
-pfb provides a way to select from a list of options using the up/down keys using
-
-`pfb select-from array_of_options`
+This pattern saves the cursor position after the prompt and restores it when displaying the answer, keeping everything on one line. For simple text input, use `pfb input` instead.
 
 ## Helper functions and variables
 
@@ -128,3 +170,22 @@ Examples using RGB color functions:
 `printf "$(rgb_bg 50 150 50)Green background${RESET}\n"`
 
 `printf "$(rgb_fg 255 100 200)$(rgb_bg 50 50 100)Custom colors${RESET}\n"`
+
+## Comparison with gum
+
+[gum](https://github.com/charmbracelet/gum) is a more comprehensive TUI toolkit that offers similar functionality with additional components like file browsers, tables, pagers, and advanced text filtering.
+
+**When to use pfb:**
+- Zero dependencies - just source a single bash file (~10KB)
+- Maximum portability (works anywhere with bash 4.0+)
+- No external binary installation required
+- Direct function calls (no process spawning overhead)
+- Basic terminal feedback is sufficient for your needs
+
+**When to use gum:**
+- Need advanced components (file browser, tables, fuzzy filtering, pagers)
+- Building sophisticated interactive scripts
+- Prefer standalone binaries over sourced libraries
+- Want extensive styling options via CLI flags
+
+pfb occupies the lightweight, dependency-free niche - ideal for scripts you distribute or run in constrained environments where installing external tools adds friction.

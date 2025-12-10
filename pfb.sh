@@ -141,6 +141,102 @@ pfb() {
         echo "${PFB_DEFAULT_LOG_DIR}/${PFB_DEFAULT_LOG}.log"
     }
 
+    # Print confirmation prompt with yes/no selection
+    # @param message to show
+    # @return 0 for yes, 1 for no
+    _confirm() {
+        local message selected
+        message="$1"
+
+        print_option()      { printf "  %-3s" "$1"; }
+        print_selected()    { printf "${BOLD}${PROMPT_COLOR}> %-3s${RESET}" "$1"; }
+
+        key_input() {
+            read -rs -n1 key 2>/dev/null >&2
+            case "$key" in
+                $'\x1b')
+                    read -rs -n2 key 2>/dev/null >&2
+                    if [[ $key = "[D" ]]; then echo 'left';  fi
+                    if [[ $key = "[C" ]]; then echo 'right'; fi
+                    ;;
+                "y"|"Y") echo 'yes';;
+                "n"|"N") echo 'no';;
+                "") echo 'enter';;
+            esac
+        }
+
+        trap "cursor_on; stty echo; printf '\n'; exit" 2
+
+        cursor_off
+        selected=0
+
+        while true; do
+            # Print everything on one line
+            line_start
+            erase_line
+            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} ${DIM}(y/n)${RESET} "
+            if [ "$selected" -eq 0 ]; then
+                print_selected "Yes"
+                printf " / "
+                print_option "No"
+            else
+                print_option "Yes"
+                printf " / "
+                print_selected "No"
+            fi
+
+            case $(key_input) in
+                enter) break;;
+                yes)   selected=0; break;;
+                no)    selected=1; break;;
+                left|right)
+                    if [ "$selected" -eq 0 ]; then
+                        selected=1
+                    else
+                        selected=0
+                    fi
+                    ;;
+            esac
+        done
+
+        # Show final selection on same line
+        line_start
+        erase_line
+        cursor_on
+        printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} "
+        if [ "$selected" -eq 0 ]; then
+            printf "${SUCCESS_COLOR}Yes${RESET}\n"
+        else
+            printf "${DIM}No${RESET}\n"
+        fi
+
+        return "$selected"
+    }
+
+    # Print styled input prompt and collect text
+    # @param message to show as prompt
+    # @param default value (optional)
+    # @return user input via echo
+    _input() {
+        local message default value
+        message="$1"
+        default="${2:-}"
+
+        if [ -n "$default" ]; then
+            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} ${DIM}[$default]${RESET} " >&2
+        else
+            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} " >&2
+        fi
+
+        read -r value
+
+        if [ -z "$value" ] && [ -n "$default" ]; then
+            value="$default"
+        fi
+
+        echo "$value"
+    }
+
     # Print pretty spinner prompt
     # @param message to show
     # @param command to be performed
@@ -228,6 +324,8 @@ pfb() {
     _test() {
         PFB_DEFAULT_LOG="pfb_test"
         
+        clear
+
         pfb heading "Log levels:"
         echo
         pfb info "There are only 24 hours in the day. Play hard, work hard."
@@ -235,7 +333,7 @@ pfb() {
         pfb err "Going... going... gone... BOOM!"
         pfb success "That's all folks."
 
-        sleep 2
+        sleep 2 && clear
 
         pfb heading "Headings:"
         pfb heading "Some wisdom from Dr. Seuss" "🐸"
@@ -244,7 +342,7 @@ pfb() {
         pfb subheading "those who matter don't mind."
         pfb suggestion "This suggests some wise words to live by"
 
-        sleep 2
+        sleep 2 && clear
 
         pfb heading "Long running commands:"
         echo
@@ -253,7 +351,7 @@ pfb() {
         pfb success "Five second snooze successful... that feels better!"
         pfb subheading "Commands are written to ${BOLD}$(pfb logfile)${RESET}"
 
-        sleep 2
+        sleep 2 && clear
 
         pfb heading "Spinner styles:"
         pfb subheading "Available spinner styles (set PFB_SPINNER_STYLE=N):"
@@ -288,18 +386,19 @@ pfb() {
         cursor_on
         unset PFB_SPINNER_STYLE
 
-        sleep 2
+        sleep 2 && clear
 
-        pfb heading "Prompt and answer:"
+        pfb heading "Text input:"
+        pfb subheading "Supports default values shown in [brackets]."
         echo
-        local default='Ask Kermit'
-        read -p "$(pfb prompt "What does it mean to be green? [$default] ")" -r
-        cursor_up
-        erase_line
-        pfb prompt "What does it mean to be green? [$default] "
-        pfb answer "${REPLY:-$default}"
+        local answer
+        answer=$(pfb input "What's your name?" "Anonymous")
+        pfb success "Nice to meet you, $answer!"
 
         command -v fzf 1>/dev/null 2>&1 && {
+            echo
+            pfb heading "Prompt and answer (for external tools):"
+            pfb subheading "The prompt/answer pattern works with external tools like fzf."
             echo
             pfb prompt "Pick a word..."
             # shellcheck disable=SC2155
@@ -309,9 +408,10 @@ pfb() {
             pfb answer "You chose $word"
         }
 
-        sleep 2
+        sleep 2 && clear
 
         pfb heading "Selection from a set of options:"
+        pfb subheading "Use up/down arrows to navigate, enter to select."
         echo
         local options=("Four in Hand Necktie" "The Seven Fold Tie" "Skinny Necktie" "Bowtie" "Western Bowtie" "Bolo Tie" "Cravat" "Neckerchief" "Nothing. Can't stand anything round my neck")
         pfb prompt "Select a particular type of tie you prefer to adorn yourself with?"
@@ -321,6 +421,18 @@ pfb() {
         erase_line
         pfb prompt "Select a particular type of tie you prefer to adorn yourself with?"
         pfb answer "${options[$selected]}"
+
+        sleep 2 && clear
+
+        pfb heading "Confirm prompts:"
+        pfb subheading "Use left/right arrows, y/n, or enter to select. Returns 0 for yes, 1 for no."
+        echo
+        pfb confirm "Do you enjoy using pfb?"
+        if [ $? -eq 0 ]; then
+            pfb success "Wonderful! We're glad you like it."
+        else
+            pfb info "That's okay, we'll keep improving."
+        fi
     }
 
     mtype="${1}"
@@ -390,6 +502,14 @@ pfb() {
         select-from)
             shift
             _select_option "$@"
+            ;;
+        confirm)
+            shift
+            _confirm "$@"
+            ;;
+        input)
+            shift
+            _input "$@"
             ;;
         test)
             _test

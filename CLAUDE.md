@@ -27,17 +27,25 @@ The library is invoked via `pfb [message-type] [message] [optional-params]`:
 - `heading [icon]` - Section headers with optional emoji/icon
 - `subheading` - Dimmed text under headings
 - `suggestion` - Green highlighted suggestions
-- `prompt` - Formatted prompt that saves cursor position
-- `answer` - Answer text that appears after prompt (restores cursor position)
+- `input [message] [default]` - Collects text input with optional default value, returns via stdout
+- `confirm [message]` - Yes/no prompt with left/right arrow navigation, returns 0 for yes, 1 for no
+- `prompt` - Formatted prompt that saves cursor position (for use with external tools)
+- `answer` - Answer text that appears after prompt (restores cursor position, for use with external tools)
 - `wait [message] [command]` - Runs command with spinner animation, logs to file
-- `select-from [array]` - Interactive arrow-key menu, returns selected index via exit code
+- `select-from [array]` - Interactive arrow-key menu (up/down navigation), returns selected index via exit code
 - `test` - Demonstrates all features with examples
 - `logfile` - Echoes the current log file path
 
 ## Key Design Patterns
 
+### Text Input via Stdout
+The `input` command prints its prompt to stderr (>&2) so that command substitution captures only the user's input value: `name=$(pfb input "Name?")`. This prevents the prompt from being included in the captured output.
+
+### Confirmation via Exit Code
+The `confirm` command returns 0 for "yes" and 1 for "no" following standard shell conventions. Everything is rendered on a single line that updates in place, with left/right arrow keys for navigation. Fixed-width formatting (`%-3s`) ensures smooth toggling between Yes/No options without visual jumping.
+
 ### Cursor Position Management
-The prompt/answer pair uses `save_pos()` and `restore_pos()` to place answer text inline after the prompt question.
+The prompt/answer pair uses `save_pos()` and `restore_pos()` to place answer text inline after the prompt question. This pattern is designed for integration with external tools (like fzf). For simple text input, use `pfb input` instead.
 
 ### Interactive Selection Return Value
 The `select-from` command returns the selected index as an exit code (`return "$selected"`), which callers capture using `$?`.
