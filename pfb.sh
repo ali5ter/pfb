@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# @file pfg.sh
-# Pretty feedback (pfb) untilty functions
+
+# @file pfb.sh
+# Pretty feedback (pfb) utility functions
 # @author Alister Lewis-Bowen <alister@lewis-bowen.org>
 # @ref https://github.com/dylanaraps/writing-a-tui-in-bash
 # @ref https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm

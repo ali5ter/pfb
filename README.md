@@ -24,6 +24,7 @@ pfb can be configured using environment variables:
 | `PFB_DEFAULT_LOG` | `scripts` | Base name for log files (creates `$PFB_DEFAULT_LOG.log`) |
 
 Example:
+
 ```bash
 export PFB_SPINNER_STYLE=18  # Use Claude Code style spinner
 export PFB_DEFAULT_LOG_DIR="/var/log/myscripts"
@@ -67,6 +68,7 @@ Collect text input from the user with an optional default value:
 `result=$(pfb input "prompt message" [default_value])`
 
 Example:
+
 ```bash
 name=$(pfb input "What's your name?" "Anonymous")
 echo "Hello, $name!"
@@ -83,6 +85,7 @@ Ask the user a yes/no question and get the result as an exit code:
 Returns exit code 0 for yes, 1 for no. Use left/right arrow keys, y/n, or enter to select.
 
 Example:
+
 ```bash
 if pfb confirm "Delete this file?"; then
     rm file.txt
@@ -99,6 +102,7 @@ pfb provides a way to select from a list of options using the up/down keys using
 `pfb select-from array_of_options`
 
 Example:
+
 ```bash
 options=("Option 1" "Option 2" "Option 3")
 pfb select-from "${options[@]}"
@@ -176,6 +180,7 @@ Examples using RGB color functions:
 [gum](https://github.com/charmbracelet/gum) is a more comprehensive TUI toolkit that offers similar functionality with additional components like file browsers, tables, pagers, and advanced text filtering.
 
 **When to use pfb:**
+
 - Zero dependencies - just source a single bash file (~10KB)
 - Maximum portability (works anywhere with bash 4.0+)
 - No external binary installation required
@@ -183,6 +188,7 @@ Examples using RGB color functions:
 - Basic terminal feedback is sufficient for your needs
 
 **When to use gum:**
+
 - Need advanced components (file browser, tables, fuzzy filtering, pagers)
 - Building sophisticated interactive scripts
 - Prefer standalone binaries over sourced libraries
