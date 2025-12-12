@@ -18,31 +18,42 @@ pfb() {
     local mtype message level icon
 
     _set_ansi_vars() {
-        local colors=( BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE )
-        for (( i=0; i<${#colors[@]}; i++ )); do
-            # shellcheck disable=SC2086
-            export ${colors[${i}]}="$(tput setaf ${i})"
-            # shellcheck disable=SC2086
-            export B${colors[${i}]}="$(tput setab ${i})"
-        done
-        # shellcheck disable=SC2155
-        export BOLD="$(tput bold)"
-        # shellcheck disable=SC2155
-        export DIM="$(tput dim)"
-        # shellcheck disable=SC2155
-        export REV="$(tput rev)"
-        # shellcheck disable=SC2155
-        export RESET="$(tput sgr0)"
-        # shellcheck disable=SC2155
-        export ESC=$(printf "\033")
-
+        local e=$'\033'
+        
+        # Basic 8 colors - foreground (30-37)
+        export BLACK="${e}[30m"
+        export RED="${e}[31m"
+        export GREEN="${e}[32m"
+        export YELLOW="${e}[33m"
+        export BLUE="${e}[34m"
+        export MAGENTA="${e}[35m"
+        export CYAN="${e}[36m"
+        export WHITE="${e}[37m"
+        
+        # Basic 8 colors - background (40-47)
+        export BBLACK="${e}[40m"
+        export BRED="${e}[41m"
+        export BGREEN="${e}[42m"
+        export BYELLOW="${e}[43m"
+        export BBLUE="${e}[44m"
+        export BMAGENTA="${e}[45m"
+        export BCYAN="${e}[46m"
+        export BWHITE="${e}[47m"
+        
+        # Text attributes
+        export BOLD="${e}[1m"
+        export DIM="${e}[2m"
+        export REV="${e}[7m"
+        export RESET="${e}[0m"
+        export ESC="$e"
+        
         # RGB color palette (24-bit true color)
-        export INFO_COLOR="${ESC}[38;2;100;180;220m"       # Soft blue-cyan
-        export WARN_COLOR="${ESC}[38;2;255;180;80m"        # Warm amber
-        export ERROR_COLOR="${ESC}[38;2;240;90;90m"        # Clear red
-        export SUCCESS_COLOR="${ESC}[38;2;90;200;120m"     # Fresh green
-        export SPINNER_COLOR="${ESC}[38;2;215;119;87m"     # Claude Code orange
-        export PROMPT_COLOR="${ESC}[38;2;120;220;240m"     # Bright cyan
+        export INFO_COLOR="${e}[38;2;100;180;220m"       # Soft blue-cyan
+        export WARN_COLOR="${e}[38;2;255;180;80m"        # Warm amber
+        export ERROR_COLOR="${e}[38;2;240;90;90m"        # Clear red
+        export SUCCESS_COLOR="${e}[38;2;90;200;120m"     # Fresh green
+        export SPINNER_COLOR="${e}[38;2;215;119;87m"     # Claude Code orange
+        export PROMPT_COLOR="${e}[38;2;120;220;240m"     # Bright cyan
     }
     _set_ansi_vars
 
@@ -50,8 +61,11 @@ pfb() {
     cursor_on()   { printf "${ESC}[?25h"; }
     # shellcheck disable=SC2059
     cursor_off()  { printf "${ESC}[?25l"; }
-    # shellcheck disable=SC2034
-    get_cursor_row()    { IFS=';' read -srdR -p $'\E[6n' ROW COL; echo "${ROW#*[}"; }
+    get_cursor_row() {
+        local ROW COL
+        IFS=';' read -srdR -p $'\E[6n' ROW COL
+        echo "${ROW#*[}"
+    }
     # shellcheck disable=SC2059
     cursor_to()         { printf "${ESC}[$1;${2:-1}H"; }
     # shellcheck disable=SC2059
@@ -113,7 +127,7 @@ pfb() {
             local i=0
             for (( i=0; i<${#options[@]}; i++ )); do
                 cursor_to $((start_row + i))
-                if [ "$i" -eq "$selected" ]; then
+                if [[ $i -eq $selected ]]; then
                     print_selected "${options[$i]}"
                 else
                     print_option "${options[$i]}"
@@ -123,9 +137,9 @@ pfb() {
             case $(key_input) in
                 enter) break;;
                 up)    ((selected--));
-                    if [ "$selected" -lt 0 ]; then selected=$((${#options[@]} - 1)); fi;;
+                    if [[ $selected -lt 0 ]]; then selected=$((${#options[@]} - 1)); fi;;
                 down)  ((selected++));
-                    if [ "$selected" -ge $# ]; then selected=0; fi;;
+                    if [[ $selected -ge $# ]]; then selected=0; fi;;
             esac
         done
 
@@ -138,7 +152,7 @@ pfb() {
 
     # Echo the filename of the log file
     _logfile() {
-        [ -d "$PFB_DEFAULT_LOG_DIR" ] || mkdir -p "$PFB_DEFAULT_LOG_DIR"
+        [[ -d $PFB_DEFAULT_LOG_DIR ]] || mkdir -p "$PFB_DEFAULT_LOG_DIR"
         echo "${PFB_DEFAULT_LOG_DIR}/${PFB_DEFAULT_LOG}.log"
     }
 
@@ -175,7 +189,7 @@ pfb() {
             line_start
             erase_line
             printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}(y/n)${RESET} " "$message"
-            if [ "$selected" -eq 0 ]; then
+            if [[ $selected -eq 0 ]]; then
                 print_selected "Yes"
                 printf " / "
                 print_option "No"
@@ -190,7 +204,7 @@ pfb() {
                 yes)   selected=0; break;;
                 no)    selected=1; break;;
                 left|right)
-                    if [ "$selected" -eq 0 ]; then
+                    if [[ $selected -eq 0 ]]; then
                         selected=1
                     else
                         selected=0
@@ -203,7 +217,7 @@ pfb() {
         erase_line
         cursor_on
         printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} " "$message"
-        if [ "$selected" -eq 0 ]; then
+        if [[ $selected -eq 0 ]]; then
             # shellcheck disable=SC2059
             printf "${SUCCESS_COLOR}Yes${RESET}\n"
         else
@@ -223,7 +237,7 @@ pfb() {
         message="$1"
         default="${2:-}"
 
-        if [ -n "$default" ]; then
+        if [[ -n $default ]]; then
             printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} ${DIM}[$default]${RESET} " >&2
         else
             printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} " >&2
@@ -231,7 +245,7 @@ pfb() {
 
         read -r value
 
-        if [ -z "$value" ] && [ -n "$default" ]; then
+        if [[ -z $value && -n $default ]]; then
             value="$default"
         fi
 
@@ -290,7 +304,7 @@ pfb() {
 
         logfile="$(_logfile)"
 
-        echo -e "\n\$ $command" >>"$logfile"
+        printf '\n$ %s\n' "$command" >>"$logfile"
 
         { eval "$command" >>"$logfile" 2>&1 & } 2>/dev/null
         pid=$!
@@ -421,7 +435,7 @@ pfb() {
         pfb subheading "Use left/right arrows, y/n, or enter to select. Returns 0 for yes, 1 for no."
         echo
         pfb confirm "Do you enjoy using pfb?"
-        if [ $? -eq 0 ]; then
+        if [[ $? -eq 0 ]]; then
             pfb success "Wonderful! We're glad you like it."
         else
             pfb info "That's okay, we'll keep improving."
