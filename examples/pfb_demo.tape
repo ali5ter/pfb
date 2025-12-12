@@ -1,17 +1,10 @@
-# @file pfb_demo.tape
-# @brief Generate animated gif for pfb demo of styles
-#        using `vhs pfb_demo.tape`
-# @note Make sure to adjust environment settings as needed
-#       before running vhs, e.g. `unset PROMPT_COMMAND`
-# @ref VHS documentation: https://github.com/charmbracelet/vhs
-# @ref _test() function in pfb.sh
-
 Output pfb_demo.gif
 
+Set Height 350
 Source config.tape
 
-Sleep 1s
 Type "pfb test"
+Sleep 500ms
 Enter
 
 # Section 1: Log levels (auto-displays, then clears after 2s)
@@ -23,8 +16,8 @@ Sleep 5s
 # Section 3: Long running commands (5s sleep + 2s pause)
 Sleep 9s
 
-# Section 4: Spinner styles (19 spinners × 2s each ≈ 38s, then 2s pause)
-Sleep 45s
+# Section 4: Spinner styles (16 spinners × 2s each ≈ 32s, then 2s pause)
+Sleep 34s
 
 # Section 5: Text input
 # Wait for "What's your name?" prompt, then type response

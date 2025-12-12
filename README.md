@@ -1,8 +1,8 @@
 # pfb
 
-A simple bash script to provide pretty feedback for your scripts.
+A simple bash utility to provide pretty feedback and prompts for your scripts.
 
-![video of pfb example output](/pfb_example.gif)
+![video of pfb example output](examples/pfb_demo.gif)
 
 ## Usage
 
@@ -33,11 +33,15 @@ source ./pfb.sh
 
 ### Log levels
 
+![video of pfb log-levels](examples/log-levels.gif)
+
 pfb provides regular log level feedback using the following command.
 
 `pfb [info|warn|error|success] message`
 
 ### Headings
+
+![video of pfb headings](examples/headings.gif)
 
 pfb provides headings with a leading icon and sub-headings for adding detail under the heading.
 
@@ -55,6 +59,8 @@ Not really a heading but a formatted subheading indicating a suggestion...
 
 ### Long running commands
 
+![video of pfb wait spinner](examples/spinner.gif)
+
 pfb can provide feedback that a command is being processed using
 
 `pfb wait message some_command`
@@ -62,6 +68,8 @@ pfb can provide feedback that a command is being processed using
 This is usefully follwed up with a pfb success log level message or a pfb answer message.
 
 ### Text input
+
+![video of pfb inpur](examples/input.gif)
 
 Collect text input from the user with an optional default value:
 
@@ -77,6 +85,8 @@ echo "Hello, $name!"
 The default value is shown in brackets and used if the user presses enter without typing anything.
 
 ### Confirmation prompts
+
+![video of pfb confirm](examples/confirm.gif)
 
 Ask the user a yes/no question and get the result as an exit code:
 
@@ -97,6 +107,8 @@ fi
 
 ### Selection from a set of options
 
+![video of pfb select-from](examples/select-from.gif)
+
 pfb provides a way to select from a list of options using the up/down keys using
 
 `pfb select-from array_of_options`
@@ -111,6 +123,8 @@ echo "You selected: ${options[$selected]}"
 ```
 
 ### Prompt and answer
+
+![video of pfb prompt-answer](examples/prompt-answer.gif)
 
 For integrating with external tools like fzf, use the prompt/answer pattern:
 

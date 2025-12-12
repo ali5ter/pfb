@@ -172,10 +172,9 @@ pfb() {
         selected=0
 
         while true; do
-            # Print everything on one line
             line_start
             erase_line
-            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} ${DIM}(y/n)${RESET} "
+            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}(y/n)${RESET} " "$message"
             if [ "$selected" -eq 0 ]; then
                 print_selected "Yes"
                 printf " / "
@@ -200,14 +199,15 @@ pfb() {
             esac
         done
 
-        # Show final selection on same line
         line_start
         erase_line
         cursor_on
-        printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} ${message}${RESET} "
+        printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} " "$message"
         if [ "$selected" -eq 0 ]; then
+            # shellcheck disable=SC2059
             printf "${SUCCESS_COLOR}Yes${RESET}\n"
         else
+            # shellcheck disable=SC2059
             printf "${DIM}No${RESET}\n"
         fi
 
@@ -247,7 +247,6 @@ pfb() {
         message="$1" && shift
         command="$*"
 
-        # Define spinner styles as arrays of frames
         # shellcheck disable=SC2034
         local spinner_0=( "|" "/" "-" "\\" )
         # shellcheck disable=SC2034
@@ -267,25 +266,21 @@ pfb() {
         # shellcheck disable=SC2034
         local spinner_8=( "∙" "●" )
         # shellcheck disable=SC2034
-        local spinner_9=( "🌸" "💮" "🏵️" "🌹" "🥀" "🌺" "🌻" "🌼" )
+        local spinner_9=( "🙈" "🙉" "🙊" )
         # shellcheck disable=SC2034
-        local spinner_10=( "🌛" "🌜" "🌚" "🌝" )
+        local spinner_10=( "◐" "◓" "◑" "◒" )
         # shellcheck disable=SC2034
-        local spinner_11=( "🌞" "🌝" )
+        local spinner_11=( "▁" "▃" "▄" "▅" "▆" "▇" "█" "▇" "▆" "▅" "▄" "▃" )
         # shellcheck disable=SC2034
-        local spinner_12=( "🌈" "☀️" "⛅️" "☁️" "🌧️" "⛈" )
+        local spinner_12=( "←" "↖" "↑" "↗" "→" "↘" "↓" "↙" )
         # shellcheck disable=SC2034
-        local spinner_13=( "🚀" "🛸" "✈️" "🛩️" "🛫" )
+        local spinner_13=( "·" "✢" "✳" "✶" "✻" "✽" )
         # shellcheck disable=SC2034
-        local spinner_14=( "🙈" "🙉" "🙊" )
+        local spinner_14=( "▏" "▎" "▍" "▌" "▋" "▊" "▉" "█" "▉" "▊" "▋" "▌" "▍" "▎" )
         # shellcheck disable=SC2034
-        local spinner_15=( "◐" "◓" "◑" "◒" )
+        local spinner_15=( "◴" "◷" "◶" "◵" )
         # shellcheck disable=SC2034
-        local spinner_16=( "▁" "▃" "▄" "▅" "▆" "▇" "█" "▇" "▆" "▅" "▄" "▃" )
-        # shellcheck disable=SC2034
-        local spinner_17=( "←" "↖" "↑" "↗" "→" "↘" "↓" "↙" )
-        # shellcheck disable=SC2034
-        local spinner_18=( "·" "✢" "✳" "✶" "✻" "✽" )
+        local spinner_16=( "🕛" "🕐" "🕑" "🕒" "🕓" "🕔" "🕕" "🕖" "🕗" "🕘" "🕙" "🕚" )
 
         # Select spinner style (default: 2)
         # Env var PFB_SPINNER_STYLE can be set to choose spinner style (0-18)
@@ -297,7 +292,6 @@ pfb() {
 
         echo -e "\n\$ $command" >>"$logfile"
 
-        # Start the command in background and immediately disown to suppress job control messages
         { eval "$command" >>"$logfile" 2>&1 & } 2>/dev/null
         pid=$!
         disown 2>/dev/null
@@ -305,7 +299,6 @@ pfb() {
         trap "cursor_on; stty echo; printf '\n'; exit" 2
 
         cursor_off
-        # Animate spinner while process is running
         while kill -0 "$pid" 2>/dev/null; do
             line_start
             erase_line
@@ -314,12 +307,31 @@ pfb() {
             sleep 0.08
         done
 
-        # Wait for the process to fully complete
         wait "$pid" 2>/dev/null
 
         line_start
         erase_line
         cursor_on
+    }
+
+    _list_spinner_styles() {
+        echo " 0: Classic"
+        echo " 1: Braille dots"
+        echo " 2: Braille wave (default)"
+        echo " 3: Braille sweep"
+        echo " 4: Blocks"
+        echo " 5: Braille pulse"
+        echo " 6: Earth"
+        echo " 7: Moon phases"
+        echo " 8: Pulsing dot"
+        echo " 9: Monkeys"
+        echo "10: Quadrants"
+        echo "11: Growing bar"
+        echo "12: Arrows"
+        echo "13: Claude code"
+        echo "14: Pulsing bar"
+        echo "15: Segments"
+        echo "16: Clock faces"
     }
 
     _test() {
@@ -356,29 +368,9 @@ pfb() {
 
         pfb heading "Spinner styles:"
         pfb subheading "Available spinner styles (set PFB_SPINNER_STYLE=N):"
-        local spinner_names=(
-            "0: Classic"
-            "1: Braille dots"
-            "2: Braille wave (default)"
-            "3: Braille sweep"
-            "4: Blocks"
-            "5: Braille pulse"
-            "6: Earth"
-            "7: Moon phases"
-            "8: Dots"
-            "9: Flowers"
-            "10: Moon faces"
-            "11: Sun/Moon"
-            "12: Weather"
-            "13: Vehicles"
-            "14: Monkeys"
-            "15: Quadrants"
-            "16: Growing bar"
-            "17: Arrows"
-            "18: Claude code"
-        )
+        mapfile -t spinner_names < <(_list_spinner_styles)
         echo
-        for i in {0..18}; do
+        for i in "${!spinner_names[@]}"; do
             PFB_SPINNER_STYLE=$i 
             pfb wait "${spinner_names[$i]}" 'sleep 2'
             cursor_off
@@ -514,6 +506,9 @@ pfb() {
             ;;
         test)
             _test
+            ;;
+        list-spinner-styles)
+            _list_spinner_styles
             ;;
         logfile)
             _logfile
