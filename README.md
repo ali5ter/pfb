@@ -32,7 +32,7 @@ pfb can be configured using environment variables:
 Example:
 
 ```bash
-export PFB_SPINNER_STYLE=18  # Use Claude Code style spinner
+export PFB_SPINNER_STYLE=18
 export PFB_DEFAULT_LOG_DIR="/var/log/myscripts"
 source ./pfb.sh
 ```
@@ -173,7 +173,7 @@ Examples of how these area used can be seen in the pfb script.
 | WARN_COLOR | Warm amber (RGB: 255, 180, 80) for warnings |
 | ERROR_COLOR | Clear red (RGB: 240, 90, 90) for errors |
 | SUCCESS_COLOR | Fresh green (RGB: 90, 200, 120) for success |
-| SPINNER_COLOR | Claude Code orange (RGB: 215, 119, 87) for spinners |
+| SPINNER_COLOR | Claude orange (RGB: 215, 119, 87) for spinners |
 | PROMPT_COLOR | Bright cyan (RGB: 120, 220, 240) for prompts |
 | BOLD DIM REV RESET | Display attributes |
 
