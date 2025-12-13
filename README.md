@@ -1,6 +1,12 @@
 # pfb
 
-A simple bash utility to provide pretty feedback and prompts for your scripts.
+<p align="center">
+  <img src="assets/pfb-hero.png" width="800" alt="pfb – pretty feedback for bash scripts">
+</p>
+<p align="center">
+  <strong>Pretty feedback for Bash scripts.</strong><br>
+  Lightweight • Dependency-free • Pleasant by default
+</p>
 
 ![video of pfb example output](examples/pfb_demo.gif)
 
