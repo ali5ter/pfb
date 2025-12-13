@@ -433,12 +433,10 @@ pfb() {
         pfb heading "Confirm prompts:"
         pfb subheading "Use left/right arrows, y/n, or enter to select. Returns 0 for yes, 1 for no."
         echo
-        pfb confirm "Do you enjoy using pfb?"
-        if [[ $? -eq 0 ]]; then
-            pfb success "Wonderful! We're glad you like it."
-        else
+        # shellcheck disable=SC2015
+        pfb confirm "Do you enjoy using pfb?" && \
+            pfb success "Wonderful! We're glad you like it." || \
             pfb info "That's okay, we'll keep improving."
-        fi
     }
 
     mtype="${1}"
