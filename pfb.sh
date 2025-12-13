@@ -9,6 +9,7 @@
 
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
+export PFB_SPINNER_STYLE="2"
 
 # Print pretty feedback
 # @param message type
@@ -52,7 +53,7 @@ pfb() {
         export WARN_COLOR="${e}[38;2;255;180;80m"        # Warm amber
         export ERROR_COLOR="${e}[38;2;240;90;90m"        # Clear red
         export SUCCESS_COLOR="${e}[38;2;90;200;120m"     # Fresh green
-        export SPINNER_COLOR="${e}[38;2;215;119;87m"     # Claude Code orange
+        export SPINNER_COLOR="${e}[38;2;215;119;87m"     # Claude orange
         export PROMPT_COLOR="${e}[38;2;120;220;240m"     # Bright cyan
     }
     _set_ansi_vars
@@ -296,9 +297,7 @@ pfb() {
         # shellcheck disable=SC2034
         local spinner_16=( "🕛" "🕐" "🕑" "🕒" "🕓" "🕔" "🕕" "🕖" "🕗" "🕘" "🕙" "🕚" )
 
-        # Select spinner style (default: 2)
-        # Env var PFB_SPINNER_STYLE can be set to choose spinner style (0-18)
-        local style=${PFB_SPINNER_STYLE:-2}
+        local style=${PFB_SPINNER_STYLE}
         eval "frames=(\"\${spinner_${style}[@]}\")"
         step=0
 
@@ -342,7 +341,7 @@ pfb() {
         echo "10: Quadrants"
         echo "11: Growing bar"
         echo "12: Arrows"
-        echo "13: Claude code"
+        echo "13: Claude"
         echo "14: Pulsing bar"
         echo "15: Segments"
         echo "16: Clock faces"
