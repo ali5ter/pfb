@@ -64,6 +64,7 @@ pfb() {
     cursor_off()  { printf "${ESC}[?25l"; }
     get_cursor_row() {
         local ROW COL
+        # shellcheck disable=SC2034
         IFS=';' read -srdR -p $'\E[6n' ROW COL
         echo "${ROW#*[}"
     }
@@ -402,7 +403,7 @@ pfb() {
         pfb success "Nice to meet you, $answer!"
 
         command -v fzf 1>/dev/null 2>&1 && {
-            echo
+            sleep 2 && clear
             pfb heading "Prompt and answer (for external tools):"
             pfb subheading "The prompt/answer pattern works with external tools like fzf."
             echo

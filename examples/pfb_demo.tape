@@ -1,6 +1,6 @@
 Output pfb_demo.gif
 
-Set Height 350
+Set Height 320
 Source config.tape
 
 Type "pfb test"
@@ -48,8 +48,8 @@ Sleep 5s
 # Toggle with arrows to show interaction, then confirm
 Sleep 1s
 Right      # Switch to "No"
-Sleep 500ms
+Sleep 1s
 Left       # Switch back to "Yes"
-Sleep 500ms
+Sleep 1s
 Enter      # Confirm "Yes"
 Sleep 5s
