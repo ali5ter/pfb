@@ -10,6 +10,8 @@
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
 export PFB_SPINNER_STYLE="2"
+export PFB_SPINNER_PID=""
+export PFB_SPINNER_FLAG=""
 
 # Print pretty feedback
 # @param message type
@@ -68,18 +70,35 @@ pfb() {
         IFS=';' read -srdR -p $'\E[6n' ROW COL
         echo "${ROW#*[}"
     }
+    # shellcheck disable=SC2329
+    get_cursor_col() {
+        local ROW COL
+        # shellcheck disable=SC2034
+        IFS=';' read -srdR -p $'\E[6n' ROW COL
+        echo "${COL}"
+    }
     # shellcheck disable=SC2059
     cursor_to()         { printf "${ESC}[$1;${2:-1}H"; }
     # shellcheck disable=SC2059
     cursor_up()         { printf "${ESC}[A"; }
     # shellcheck disable=SC2059
+    # shellcheck disable=SC2329
     cursor_down()       { printf "${ESC}[B"; }
     # shellcheck disable=SC2059
-    line_start()        { printf "\r"; }
+    cursor_sol()        { printf "\r"; }
     # shellcheck disable=SC2059
     erase_down()        { printf "${ESC}[J"; }
     # shellcheck disable=SC2059
+    # shellcheck disable=SC2329
+    erase_up()        { printf "${ESC}[1J"; }
+    # shellcheck disable=SC2059
+    # shellcheck disable=SC2329
+    erase_screen()        { printf "${ESC}[2J"; }
+    # shellcheck disable=SC2059
+    # shellcheck disable=SC2329
     erase_eol()        { printf "${ESC}[K"; }
+    # shellcheck disable=SC2059
+    erase_sol()        { printf "${ESC}[1K"; }
     # shellcheck disable=SC2059
     erase_line()        { printf "${ESC}[2K"; }
     # shellcheck disable=SC2059
@@ -87,8 +106,10 @@ pfb() {
     # shellcheck disable=SC2059
     restore_pos()       { printf "${ESC}8"; }
     # shellcheck disable=SC2059
+    # shellcheck disable=SC2329
     rgb_fg()            { printf "${ESC}[38;2;${1};${2};${3}m"; }
     # shellcheck disable=SC2059
+    # shellcheck disable=SC2329
     rgb_bg()            { printf "${ESC}[48;2;${1};${2};${3}m"; }
 
     _print_message() {
@@ -188,7 +209,7 @@ pfb() {
         selected=0
 
         while true; do
-            line_start
+            cursor_sol
             erase_line
             printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}(y/n)${RESET} " "$message"
             if [[ $selected -eq 0 ]]; then
@@ -215,7 +236,7 @@ pfb() {
             esac
         done
 
-        line_start
+        cursor_sol
         erase_line
         cursor_on
         printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} " "$message"
@@ -254,15 +275,8 @@ pfb() {
         echo "$value"
     }
 
-    # Print pretty spinner prompt
-    # @param message to show
-    # @param command to be performed
-    _wait() {
-        local message frames step logfile pid command
-
-        message="$1" && shift
-        command="$*"
-
+    # Get spinner frames for the selected style
+    _get_spinner_frames() {
         # shellcheck disable=SC2034
         local spinner_0=( "|" "/" "-" "\\" )
         # shellcheck disable=SC2034
@@ -297,37 +311,13 @@ pfb() {
         local spinner_15=( "◴" "◷" "◶" "◵" )
         # shellcheck disable=SC2034
         local spinner_16=( "🕛" "🕐" "🕑" "🕒" "🕓" "🕔" "🕕" "🕖" "🕗" "🕘" "🕙" "🕚" )
-
+        
         local style=${PFB_SPINNER_STYLE}
-        eval "frames=(\"\${spinner_${style}[@]}\")"
-        step=0
-
-        logfile="$(_logfile)"
-
-        printf '\n$ %s\n' "$command" >>"$logfile"
-
-        { eval "$command" >>"$logfile" 2>&1 & } 2>/dev/null
-        pid=$!
-        disown 2>/dev/null
-
-        trap "cursor_on; stty echo; printf '\n'; exit" 2
-
-        cursor_off
-        while kill -0 "$pid" 2>/dev/null; do
-            line_start
-            erase_line
-            # shellcheck disable=SC2059
-            printf "${BOLD}${INFO_COLOR}[wait]${RESET} ${BOLD}${SPINNER_COLOR}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}"
-            sleep 0.08
-        done
-
-        wait "$pid" 2>/dev/null
-
-        line_start
-        erase_line
-        cursor_on
+        local -n frames_ref="spinner_${style}"
+        printf '%s\n' "${frames_ref[@]}"
     }
 
+    # List available spinner styles
     _list_spinner_styles() {
         echo " 0: Classic"
         echo " 1: Braille dots"
@@ -346,6 +336,124 @@ pfb() {
         echo "14: Pulsing bar"
         echo "15: Segments"
         echo "16: Clock faces"
+    }
+
+    # Start spinner in background without running a command
+    # @param message to show
+    _wait_start() {
+        local message="$1"
+        local -a frames
+        local step=0
+
+        # Stop any existing spinner first
+        _wait_stop 2>/dev/null
+        
+        mapfile -t frames < <(_get_spinner_frames)
+        
+        # Create unique flag file  
+        PFB_SPINNER_FLAG="/tmp/pfb_spinner_$$_${RANDOM}"
+        touch "$PFB_SPINNER_FLAG"
+        
+        cursor_off
+        
+        # Run spinner in background - capture flag in local var
+        {
+            local flag_file="$PFB_SPINNER_FLAG"
+            local step=0
+            while [[ -f "$flag_file" ]]; do
+                erase_sol
+                cursor_sol
+                printf "${BOLD}${INFO_COLOR}[wait]${RESET} ${BOLD}${SPINNER_COLOR}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}"
+                sleep 0.08
+            done
+            # Clean up on exit
+            erase_sol
+            cursor_sol
+            cursor_on
+        } 2>/dev/null &
+        
+        PFB_SPINNER_PID=$!
+        disown 2>/dev/null
+
+        # Since there's no way to suspend the inital job control message
+        # because `set +m`, using a subshell, and piping to /dev/null do
+        # not work, move the cursor up to the initial job control message
+        # line, clear it, and move the cursor to the start of the line.
+        # sleep 0.01 # Give bash time to echo the job control message
+        cursor_up
+        erase_sol
+        cursor_sol
+    }
+
+    # Stop active spinner - MUST be synchronous
+    _wait_stop() {
+        # Early exit if no spinner
+        [[ -z $PFB_SPINNER_PID ]] && return 0
+        
+        # Remove flag file to signal stop
+        [[ -n $PFB_SPINNER_FLAG ]] && rm -f "$PFB_SPINNER_FLAG" 2>/dev/null
+        
+        # Wait for graceful exit (up to 0.5 seconds)
+        local count=0
+        while kill -0 "$PFB_SPINNER_PID" 2>/dev/null && [[ $count -lt 10 ]]; do
+            sleep 0.05
+            ((count++))
+        done
+        
+        # Force kill if still running
+        if kill -0 "$PFB_SPINNER_PID" 2>/dev/null; then
+            kill -9 "$PFB_SPINNER_PID" 2>/dev/null
+            wait "$PFB_SPINNER_PID" 2>/dev/null
+        fi
+        
+        # Ensure line is cleared and cursor is on
+        erase_sol
+        cursor_sol
+        cursor_on
+        
+        # Clear state
+        PFB_SPINNER_PID=""
+        PFB_SPINNER_FLAG=""
+    }
+
+    # Print pretty spinner prompt
+    # @param message to show
+    # @param command to be performed (optional)
+    _wait() {
+        local message logfile pid command exit_code
+
+        message="$1" && shift
+        command="$*"
+        
+        # No command provided - just start spinner
+        if [[ -z $command ]]; then
+            _wait_start "$message"
+            return 0
+        fi
+        
+        # Command provided - run with spinner
+        logfile="$(_logfile)"
+        printf '\n$ %s\n' "$command" >>"$logfile"
+        
+        { eval "$command" >>"$logfile" 2>&1 & } 2>/dev/null
+        pid=$!
+        disown 2>/dev/null
+        
+        trap "_wait_stop; cursor_on; stty echo; printf '\n'; exit" INT TERM
+
+        _wait_start "$message"
+        
+        # Poll for command completion
+        while kill -0 "$pid" 2>/dev/null; do
+            sleep 0.1
+        done
+        
+        wait "$pid" 2>/dev/null
+        exit_code=$?
+        
+        _wait_stop
+
+        return $exit_code
     }
 
     _test() {
@@ -374,7 +482,6 @@ pfb() {
         pfb heading "Long running commands:"
         echo
         pfb wait "Having a five second snooze..." 'sleep 5 && date'
-        erase_line
         pfb success "Five second snooze successful... that feels better!"
         pfb subheading "Commands are written to ${BOLD}$(pfb logfile)${RESET}"
 
@@ -387,10 +494,7 @@ pfb() {
         for i in "${!spinner_names[@]}"; do
             PFB_SPINNER_STYLE=$i 
             pfb wait "${spinner_names[$i]}" 'sleep 2'
-            cursor_off
-            erase_line
         done
-        cursor_on
         unset PFB_SPINNER_STYLE
 
         sleep 2 && clear
@@ -459,6 +563,7 @@ pfb() {
             _print_message
             ;;
         err*)
+            _wait_stop
             level="${ERROR_COLOR}[fatal]"
             message="${message}
 "
@@ -477,6 +582,7 @@ pfb() {
             _print_message
             ;;
         done|succ*)
+            _wait_stop
             level="${SUCCESS_COLOR}[done] "
             icon="${SUCCESS_COLOR}√"
             message="${message}
@@ -503,6 +609,9 @@ pfb() {
         wait)
             shift
             _wait "$@"
+            ;;
+        wait-stop)
+            _wait_stop
             ;;
         select-from)
             shift
