@@ -151,12 +151,16 @@ pfb uses ANSI/VT100 Terminal Control Escape Sequences which you can use yourself
 | cursor_on | Turn on the cursor |
 | cursor_off | Turn off the cursor |
 | get_cursor_row | Echo the current row number of the cursor |
+| get_cursor_col | Echo the current column number of the cursor |
 | cursor_to row [column] | Move the cursor to a position |
 | cursor_up | Move the cursor to the row above |
 | cursor_down | Move the cursor to the row below |
-| line_start | Move the cursor to the beginning of the current line |
+| cursor_sol | Move the cursor to the start of the current line |
 | erase_down | Remove all content from the cursor down |
+| erase_up | Remove all content from the cursor up |
+| erase_screen | Remove all content from the screen |
 | erase_eol | Remove all content from the cursor to the end of the line |
+| erase_sol | Remove all content from the cursor to the start of the line |
 | erase_line | Remove all content on the current line |
 | save_pos | Store the current position of the cursor |
 | restore_pos | Restore the position of the cursor to the last saved position |
