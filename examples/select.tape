@@ -3,14 +3,14 @@ Output select-from.gif
 Set Height 400
 Source config.tape
 
-Type `pfb select-from 'Option 1' 'Option 2' 'Option 3' 'Option 4' 'Option 5' 'Option 6'`
+Type `pfb select 'Option 1' 'Option 2' 'Option 3' 'Option 4' 'Option 5' 'Option 6'`
 Enter
 Sleep 2
 Enter
 Enter
 Type `pfb prompt "A prompt with a list of possible answers" ; \` Enter
 Type `options=('Option 1' 'Option 2' 'Option 3' 'Option 4' 'Option 5' 'Option 6') ;\` Enter
-Type `pfb select-from "${options[@]}" ; \` Enter
+Type `pfb select "${options[@]}" ; \` Enter
 Type `selected=$? ; \` Enter
 Type `cursor_up ; \` Enter
 Type `erase_line ; \` Enter
