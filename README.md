@@ -73,8 +73,10 @@ pfb can provide feedback that a command is being processed using
 
 You can also start a spinner manually and stop it later:
 
-`pfb spinner start message`
-`pfb spinner stop`
+```bash
+pfb spinner start message
+pfb spinner stop
+```
 
 This is usefully followed up with a pfb success log level message or a pfb answer message.
 
