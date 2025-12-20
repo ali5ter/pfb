@@ -69,9 +69,14 @@ Not really a heading but a formatted subheading indicating a suggestion...
 
 pfb can provide feedback that a command is being processed using
 
-`pfb wait message some_command`
+`pfb spinner start message some_command`
 
-This is usefully follwed up with a pfb success log level message or a pfb answer message.
+You can also start a spinner manually and stop it later:
+
+`pfb spinner start message`
+`pfb spinner stop`
+
+This is usefully followed up with a pfb success log level message or a pfb answer message.
 
 ### Text input
 
@@ -117,13 +122,13 @@ fi
 
 pfb provides a way to select from a list of options using the up/down keys using
 
-`pfb select-from array_of_options`
+`pfb select array_of_options`
 
 Example:
 
 ```bash
 options=("Option 1" "Option 2" "Option 3")
-pfb select-from "${options[@]}"
+pfb select "${options[@]}"
 selected=$?
 echo "You selected: ${options[$selected]}"
 ```

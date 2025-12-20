@@ -481,7 +481,7 @@ pfb() {
 
         pfb heading "Long running commands:"
         echo
-        pfb wait "Having a five second snooze..." 'sleep 5 && date'
+        pfb spinner start "Having a five second snooze..." 'sleep 5 && date'
         pfb success "Five second snooze successful... that feels better!"
         pfb subheading "Commands are written to ${BOLD}$(pfb logfile)${RESET}"
 
@@ -492,8 +492,8 @@ pfb() {
         mapfile -t spinner_names < <(_list_spinner_styles)
         echo
         for i in "${!spinner_names[@]}"; do
-            PFB_SPINNER_STYLE=$i 
-            pfb wait "${spinner_names[$i]}" 'sleep 2'
+            PFB_SPINNER_STYLE=$i
+            pfb spinner start "${spinner_names[$i]}" 'sleep 2'
         done
         unset PFB_SPINNER_STYLE
 
@@ -526,7 +526,7 @@ pfb() {
         echo
         local options=("Four in Hand Necktie" "The Seven Fold Tie" "Skinny Necktie" "Bowtie" "Western Bowtie" "Bolo Tie" "Cravat" "Neckerchief" "Nothing. Can't stand anything round my neck")
         pfb prompt "Select a particular type of tie you prefer to adorn yourself with?"
-        pfb select-from "${options[@]}"
+        pfb select "${options[@]}"
         selected=$?
         cursor_up
         erase_line
@@ -606,14 +606,32 @@ pfb() {
 "
             _print_message
             ;;
+        spinner)
+            case "${2:-}" in
+                start)
+                    shift 2
+                    _wait "$@"
+                    ;;
+                stop)
+                    _wait_stop
+                    ;;
+            esac
+            ;;
         wait)
+            # Backward compatibility: redirect to spinner start
             shift
             _wait "$@"
             ;;
         wait-stop)
+            # Backward compatibility: redirect to spinner stop
             _wait_stop
             ;;
+        select)
+            shift
+            _select_option "$@"
+            ;;
         select-from)
+            # Backward compatibility: redirect to select
             shift
             _select_option "$@"
             ;;
