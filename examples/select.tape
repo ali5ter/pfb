@@ -1,4 +1,4 @@
-Output select-from.gif
+Output select.gif
 
 Set Height 400
 Source config.tape
@@ -16,7 +16,6 @@ Type `cursor_up ; \` Enter
 Type `erase_line ; \` Enter
 Type `pfb prompt "A prompt with a list of possible answers" ; \` Enter
 Type `pfb answer "${options[$selected]}"` Enter
-Enter
 Sleep 1
 Down
 Sleep 500ms
