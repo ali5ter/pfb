@@ -118,7 +118,7 @@ fi
 
 ### Selection from a set of options
 
-![video of pfb select-from](examples/select-from.gif)
+![video of pfb select](examples/select.gif)
 
 pfb provides a way to select from a list of options using the up/down keys using
 
