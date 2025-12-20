@@ -397,7 +397,7 @@ pfb() {
         local count=0
         while kill -0 "$PFB_SPINNER_PID" 2>/dev/null && [[ $count -lt 10 ]]; do
             sleep 0.05
-            ((count++))
+            count=$((count + 1))
         done
         
         # Force kill if still running
@@ -410,10 +410,13 @@ pfb() {
         erase_sol
         cursor_sol
         cursor_on
-        
+
         # Clear state
         PFB_SPINNER_PID=""
         PFB_SPINNER_FLAG=""
+
+        # Always return success
+        return 0
     }
 
     # Print pretty spinner prompt
