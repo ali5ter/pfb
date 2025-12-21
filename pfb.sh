@@ -7,6 +7,7 @@
 # @ref https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm
 # @ref https://unix.stackexchange.com/questions/146570/arrow-key-enter-menu
 
+export PFB_VERSION="1.0.0"
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
 export PFB_SPINNER_STYLE="2"
@@ -544,44 +545,152 @@ pfb() {
             pfb info "That's okay, we'll keep improving."
     }
 
+    _print_help() {
+        cat <<'EOF'
+ pfb - Pretty feedback for bash scripts
+
+ Usage: pfb <command> [args...]
+
+ Commands:
+   info <msg>              Display info message
+   warn <msg>              Display warning message
+   error <msg>             Display error message
+   success <msg>           Display success message
+
+   heading <msg> [icon]    Display heading
+   subheading <msg>        Display subheading
+   suggestion <msg>        Display suggestion
+
+   spinner start <msg> [cmd]  Start spinner (optionally with command)
+   spinner stop               Stop active spinner
+
+   confirm <question>      Yes/no confirmation (exit code 0/1)
+   input <prompt> [default]   Get text input
+   select <opt1> <opt2>...    Select from options (returns index via $?)
+
+   prompt <msg>            Display prompt (save cursor position)
+   answer <msg>            Display answer (restore cursor position)
+
+   test                    Run interactive demo
+   list-spinner-styles     Show available spinner styles
+   logfile                 Show log file path
+
+ Options:
+   --help, -h             Show this help
+   --version, -v          Show version
+
+ Environment Variables:
+   PFB_SPINNER_STYLE      Spinner animation style (0-16, default: 2)
+   PFB_DEFAULT_LOG_DIR    Log directory (default: $HOME/logs)
+   PFB_DEFAULT_LOG        Log basename (default: scripts)
+
+ Examples:
+   pfb info "Starting process"
+   pfb spinner start "Loading..." 'sleep 2'
+   pfb confirm "Continue?" && echo "Yes!"
+   name=$(pfb input "Your name?" "Anonymous")
+
+   options=("Option 1" "Option 2" "Option 3")
+   pfb select "${options[@]}"
+   selected=$?
+   echo "You selected: ${options[$selected]}"
+
+ Backward Compatibility:
+   pfb wait <msg> [cmd]    → use 'pfb spinner start' instead
+   pfb wait-stop           → use 'pfb spinner stop' instead
+   pfb select-from         → use 'pfb select' instead
+
+ Documentation: https://github.com/ali5ter/pfb
+EOF
+    }
+
     mtype="${1}"
     message="${2:-}"
     level=''
     icon=' '
 
+    if [[ -z "$mtype" ]]; then
+        _print_help
+        return 0
+    fi
+
     case "$mtype" in
+        --help|-h|help)
+            _print_help
+            return 0
+            ;;
+        --version|-v|version)
+            echo "pfb version $PFB_VERSION"
+            return 0
+            ;;
         info*)
+            if [[ -z "$message" ]]; then
+                echo "pfb: info requires a message argument" >&2
+                echo "Usage: pfb info <message>" >&2
+                echo "Example: pfb info \"Processing complete\"" >&2
+                return 1
+            fi
             level="${INFO_COLOR}[info] "
             message="${message}
 "
             _print_message
             ;;
         warn*)
+            if [[ -z "$message" ]]; then
+                echo "pfb: warn requires a message argument" >&2
+                echo "Usage: pfb warn <message>" >&2
+                echo "Example: pfb warn \"Low disk space detected\"" >&2
+                return 1
+            fi
             level="${WARN_COLOR}[warn] "
             message="${message}
 "
             _print_message
             ;;
         err*)
+            if [[ -z "$message" ]]; then
+                echo "pfb: error requires a message argument" >&2
+                echo "Usage: pfb error <message>" >&2
+                echo "Example: pfb error \"Failed to connect to server\"" >&2
+                return 1
+            fi
             _wait_stop
-            level="${ERROR_COLOR}[fatal]"
+            level="${ERROR_COLOR}[error]"
             message="${message}
 "
             _print_message
             ;;
         prompt)
+            if [[ -z "$message" ]]; then
+                echo "pfb: prompt requires a message argument" >&2
+                echo "Usage: pfb prompt <message>" >&2
+                echo "Example: pfb prompt \"Enter your name:\"" >&2
+                return 1
+            fi
             icon="${PROMPT_COLOR}?"
             message="${BOLD}$message"
             _print_message
             save_pos
             ;;
         answer)
+            if [[ -z "$message" ]]; then
+                echo "pfb: answer requires a message argument" >&2
+                echo "Usage: pfb answer <message>" >&2
+                echo "Example: pfb answer \"John Doe\"" >&2
+                return 1
+            fi
             message=" ${INFO_COLOR}${message}
 "
             restore_pos
             _print_message
             ;;
         done|succ*)
+            if [[ -z "$message" ]]; then
+                echo "pfb: success requires a message argument" >&2
+                echo "Usage: pfb success <message>" >&2
+                echo "Example: pfb success \"Process completed successfully\"" >&2
+                return 1
+            fi
             _wait_stop
             level="${SUCCESS_COLOR}[done] "
             icon="${SUCCESS_COLOR}√"
@@ -590,6 +699,12 @@ pfb() {
             _print_message
             ;;
         heading)
+            if [[ -z "$message" ]]; then
+                echo "pfb: heading requires a message argument" >&2
+                echo "Usage: pfb heading <message> [icon]" >&2
+                echo "Example: pfb heading \"Chapter 1\" §" >&2
+                return 1
+            fi
             echo
             icon="${3:-§}"
             message=$"${BOLD}${message}
@@ -597,11 +712,23 @@ pfb() {
             _print_message
             ;;
         subheading)
+            if [[ -z "$message" ]]; then
+                echo "pfb: subheading requires a message argument" >&2
+                echo "Usage: pfb subheading <message>" >&2
+                echo "Example: pfb subheading \"Introduction to Bash Scripting\"" >&2
+                return 1
+            fi
             message=" ${DIM}${message}
 "
             _print_message
             ;;
         suggestion)
+            if [[ -z "$message" ]]; then
+                echo "pfb: suggestion requires a message argument" >&2
+                echo "Usage: pfb suggestion <message>" >&2
+                echo "Example: pfb suggestion \"Consider using functions for better code organization.\"" >&2
+                return 1
+            fi
             message=" ${BOLD}${SUCCESS_COLOR}${message}
 "
             _print_message
@@ -609,11 +736,22 @@ pfb() {
         spinner)
             case "${2:-}" in
                 start)
+                    if [[ $# -lt 3 ]]; then
+                        echo "pfb: spinner start requires a message" >&2
+                        echo "Usage: pfb spinner start <message> [command]" >&2
+                        echo "Example: pfb spinner start \"Loading...\" 'sleep 2'" >&2
+                        return 1
+                    fi
                     shift 2
                     _wait "$@"
                     ;;
                 stop)
                     _wait_stop
+                    ;;
+                *)
+                    echo "pfb: unknown spinner subcommand '$2'" >&2
+                    echo "Usage: pfb spinner {start|stop}" >&2
+                    return 1
                     ;;
             esac
             ;;
@@ -636,10 +774,22 @@ pfb() {
             _select_option "$@"
             ;;
         confirm)
+            if [[ -z "$message" ]]; then
+                echo "pfb: confirm requires a question argument" >&2
+                echo "Usage: pfb confirm <question>" >&2
+                echo "Example: pfb confirm \"Do you want to continue?\"" >&2
+                return 1
+            fi
             shift
             _confirm "$@"
             ;;
         input)
+            if [[ -z "$message" ]]; then
+                echo "pfb: input requires a prompt argument" >&2
+                echo "Usage: pfb input <prompt> [default]" >&2
+                echo "Example: pfb input \"Enter your name:\" \"Anonymous\"" >&2
+                return 1
+            fi
             shift
             _input "$@"
             ;;
@@ -651,6 +801,11 @@ pfb() {
             ;;
         logfile)
             _logfile
+            ;;
+        *)
+            echo "pfb: unknown command '$mtype'" >&2
+            echo "Try 'pfb --help' for usage information" >&2
+            return 1
             ;;
     esac
 }
