@@ -22,21 +22,14 @@ pfb() {
     local mtype message level icon
 
     _set_ansi_vars() {
-        # Respect NO_COLOR environment variable (https://no-color.org/)
-        # Also check PFB_NO_COLOR for pfb-specific override
-        if [[ -n ${NO_COLOR:-} ]] || [[ ${PFB_NO_COLOR:-0} == "1" ]]; then
-            # Set all color and formatting variables to empty
-            export BLACK="" RED="" GREEN="" YELLOW="" BLUE="" MAGENTA="" CYAN="" WHITE=""
-            export BBLACK="" BRED="" BGREEN="" BYELLOW="" BBLUE="" BMAGENTA="" BCYAN="" BWHITE=""
-            export BOLD="" DIM="" REV="" RESET="" ESC=""
-            export INFO_COLOR="" WARN_COLOR="" ERROR_COLOR="" SUCCESS_COLOR=""
-            export SPINNER_COLOR="" PROMPT_COLOR=""
-            return 0
-        fi
-
-        # Auto-disable colors if not outputting to a terminal
-        # Allow PFB_FORCE_COLOR to override (for tests or specific use cases)
-        if [[ ! -t 1 ]] && [[ -z ${PFB_FORCE_COLOR:-} ]]; then
+        # Check if colors should be disabled:
+        # - NO_COLOR environment variable (https://no-color.org/)
+        # - PFB_NO_COLOR for pfb-specific override
+        # - Not a TTY (unless PFB_FORCE_COLOR is set)
+        if [[ -n ${NO_COLOR:-} ]] || \
+           [[ ${PFB_NO_COLOR:-0} == "1" ]] || \
+           ( [[ ! -t 1 ]] && [[ -z ${PFB_FORCE_COLOR:-} ]] ); then
+            # Disable all colors and formatting
             export BLACK="" RED="" GREEN="" YELLOW="" BLUE="" MAGENTA="" CYAN="" WHITE=""
             export BBLACK="" BRED="" BGREEN="" BYELLOW="" BBLUE="" BMAGENTA="" BCYAN="" BWHITE=""
             export BOLD="" DIM="" REV="" RESET="" ESC=""
