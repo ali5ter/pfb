@@ -25,15 +25,19 @@ pfb can be configured using environment variables:
 
 | Variable | Default | Description |
 | :------- | :------ | :---------- |
-| `PFB_SPINNER_STYLE` | `2` | Spinner style (0-18). Run `pfb test` to see all styles |
+| `PFB_SPINNER_STYLE` | `2` | Spinner style (0-16). Run `pfb test` to see all styles |
 | `PFB_DEFAULT_LOG_DIR` | `$HOME/logs` | Directory where command logs are stored |
 | `PFB_DEFAULT_LOG` | `scripts` | Base name for log files (creates `$PFB_DEFAULT_LOG.log`) |
+| `NO_COLOR` | (unset) | Disable colors (see [no-color.org](https://no-color.org)) |
+| `PFB_NO_COLOR` | `0` | pfb-specific color disable (set to `1` to disable) |
+| `PFB_FORCE_COLOR` | (unset) | Force colors even when not a TTY |
 
 Example:
 
 ```bash
-export PFB_SPINNER_STYLE=18
+export PFB_SPINNER_STYLE=13
 export PFB_DEFAULT_LOG_DIR="/var/log/myscripts"
+export NO_COLOR=1  # Disable colors for accessibility
 source ./pfb.sh
 ```
 

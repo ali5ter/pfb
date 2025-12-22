@@ -22,6 +22,29 @@ pfb() {
     local mtype message level icon
 
     _set_ansi_vars() {
+        # Respect NO_COLOR environment variable (https://no-color.org/)
+        # Also check PFB_NO_COLOR for pfb-specific override
+        if [[ -n ${NO_COLOR:-} ]] || [[ ${PFB_NO_COLOR:-0} == "1" ]]; then
+            # Set all color and formatting variables to empty
+            export BLACK="" RED="" GREEN="" YELLOW="" BLUE="" MAGENTA="" CYAN="" WHITE=""
+            export BBLACK="" BRED="" BGREEN="" BYELLOW="" BBLUE="" BMAGENTA="" BCYAN="" BWHITE=""
+            export BOLD="" DIM="" REV="" RESET="" ESC=""
+            export INFO_COLOR="" WARN_COLOR="" ERROR_COLOR="" SUCCESS_COLOR=""
+            export SPINNER_COLOR="" PROMPT_COLOR=""
+            return 0
+        fi
+
+        # Auto-disable colors if not outputting to a terminal
+        # Allow PFB_FORCE_COLOR to override (for tests or specific use cases)
+        if [[ ! -t 1 ]] && [[ -z ${PFB_FORCE_COLOR:-} ]]; then
+            export BLACK="" RED="" GREEN="" YELLOW="" BLUE="" MAGENTA="" CYAN="" WHITE=""
+            export BBLACK="" BRED="" BGREEN="" BYELLOW="" BBLUE="" BMAGENTA="" BCYAN="" BWHITE=""
+            export BOLD="" DIM="" REV="" RESET="" ESC=""
+            export INFO_COLOR="" WARN_COLOR="" ERROR_COLOR="" SUCCESS_COLOR=""
+            export SPINNER_COLOR="" PROMPT_COLOR=""
+            return 0
+        fi
+
         local e=$'\033'
         
         # Basic 8 colors - foreground (30-37)
@@ -312,8 +335,16 @@ pfb() {
         local spinner_15=( "◴" "◷" "◶" "◵" )
         # shellcheck disable=SC2034
         local spinner_16=( "🕛" "🕐" "🕑" "🕒" "🕓" "🕔" "🕕" "🕖" "🕗" "🕘" "🕙" "🕚" )
-        
-        local style=${PFB_SPINNER_STYLE}
+
+        local style=${PFB_SPINNER_STYLE:-2}
+
+        # Validate spinner style range
+        if ! [[ "$style" =~ ^[0-9]+$ ]] || [[ $style -lt 0 ]] || [[ $style -gt 16 ]]; then
+            echo "pfb: invalid spinner style '$style' (valid range: 0-16)" >&2
+            echo "Using default spinner style 2" >&2
+            style=2
+        fi
+
         local -n frames_ref="spinner_${style}"
         printf '%s\n' "${frames_ref[@]}"
     }
@@ -548,13 +579,96 @@ pfb() {
             pfb info "That's okay, we'll keep improving."
     }
 
+    # Calculate Levenshtein distance between two strings
+    _levenshtein_distance() {
+        local s1="$1" s2="$2"
+        local len1=${#s1} len2=${#s2}
+        local -A matrix
+        local i j cost
+
+        # Initialize matrix
+        for ((i=0; i<=len1; i++)); do
+            matrix[$i,0]=$i
+        done
+        for ((j=0; j<=len2; j++)); do
+            matrix[0,$j]=$j
+        done
+
+        # Fill matrix
+        for ((i=1; i<=len1; i++)); do
+            for ((j=1; j<=len2; j++)); do
+                if [[ "${s1:i-1:1}" == "${s2:j-1:1}" ]]; then
+                    cost=0
+                else
+                    cost=1
+                fi
+
+                local a=$((matrix[$((i-1)),$j] + 1))
+                local b=$((matrix[$i,$((j-1))] + 1))
+                local c=$((matrix[$((i-1)),$((j-1))] + cost))
+
+                # Find minimum
+                matrix[$i,$j]=$a
+                [[ $b -lt ${matrix[$i,$j]} ]] && matrix[$i,$j]=$b
+                [[ $c -lt ${matrix[$i,$j]} ]] && matrix[$i,$j]=$c
+            done
+        done
+
+        echo "${matrix[$len1,$len2]}"
+    }
+
+    # Suggest similar command for typos
+    _suggest_command() {
+        local input="$1"
+        local commands=(
+            "info" "warn" "error" "success" "err"
+            "heading" "subheading" "suggestion"
+            "spinner" "wait" "wait-stop"
+            "confirm" "input" "select" "select-from"
+            "prompt" "answer"
+            "test" "list-spinner-styles" "logfile"
+            "help" "version"
+        )
+
+        local min_distance=999
+        local suggestion=""
+        local distance
+
+        # Find command with minimum distance
+        for cmd in "${commands[@]}"; do
+            distance=$(_levenshtein_distance "$input" "$cmd")
+            if [[ $distance -lt $min_distance ]]; then
+                min_distance=$distance
+                suggestion="$cmd"
+            fi
+        done
+
+        # Only suggest if distance is small (within 2 character changes)
+        # and input is at least 3 characters (avoid false positives)
+        if [[ $min_distance -le 2 ]] && [[ ${#input} -ge 3 ]]; then
+            echo "$suggestion"
+        fi
+    }
+
     _print_help() {
         cat <<'EOF'
  pfb - Pretty feedback for bash scripts
 
  Usage: pfb <command> [args...]
 
- Commands:
+ Quick Start Examples:
+   pfb info "Starting process..."            # Display info message
+   pfb spinner start "Loading..." 'sleep 2'  # Show spinner during command
+   pfb confirm "Continue?" && next_step      # Ask yes/no question
+   name=$(pfb input "Your name?" "Anonymous") # Get text input
+
+ Common Commands:
+   info, warn, error, success    Display log-level messages
+   heading, subheading           Structure your output
+   spinner start/stop            Show progress for long operations
+   confirm, input, select        Interactive prompts
+
+ All Commands:
    info <msg>              Display info message
    warn <msg>              Display warning message
    error <msg>             Display error message
@@ -586,17 +700,19 @@ pfb() {
    PFB_SPINNER_STYLE      Spinner animation style (0-16, default: 2)
    PFB_DEFAULT_LOG_DIR    Log directory (default: $HOME/logs)
    PFB_DEFAULT_LOG        Log basename (default: scripts)
+   NO_COLOR               Disable colors (https://no-color.org)
+   PFB_NO_COLOR           pfb-specific color disable (set to 1)
+   PFB_FORCE_COLOR        Force colors even when not a TTY
 
- Examples:
-   pfb info "Starting process"
-   pfb spinner start "Loading..." 'sleep 2'
-   pfb confirm "Continue?" && echo "Yes!"
-   name=$(pfb input "Your name?" "Anonymous")
-
+ More Examples:
+   # Selection from options
    options=("Option 1" "Option 2" "Option 3")
    pfb select "${options[@]}"
    selected=$?
    echo "You selected: ${options[$selected]}"
+
+   # Disable colors for accessibility
+   NO_COLOR=1 pfb info "Plain text output"
 
  Backward Compatibility:
    pfb wait <msg> [cmd]    → use 'pfb spinner start' instead
@@ -604,10 +720,11 @@ pfb() {
    pfb select-from         → use 'pfb select' instead
 
  Documentation: https://github.com/ali5ter/pfb
+ Report issues: https://github.com/ali5ter/pfb/issues
 EOF
     }
 
-    mtype="${1}"
+    mtype="${1:-}"
     message="${2:-}"
     level=''
     icon=' '
@@ -696,7 +813,7 @@ EOF
             fi
             _wait_stop
             level="${SUCCESS_COLOR}[done] "
-            icon="${SUCCESS_COLOR}√"
+            icon="${SUCCESS_COLOR}✓"
             message="${message}
 "
             _print_message
@@ -807,6 +924,16 @@ EOF
             ;;
         *)
             echo "pfb: unknown command '$mtype'" >&2
+
+            # Suggest similar command if available
+            local suggestion
+            suggestion=$(_suggest_command "$mtype")
+            if [[ -n $suggestion ]]; then
+                echo >&2
+                echo "Did you mean '${suggestion}'?" >&2
+            fi
+
+            echo >&2
             echo "Try 'pfb --help' for usage information" >&2
             return 1
             ;;
