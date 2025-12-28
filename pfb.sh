@@ -328,12 +328,14 @@ pfb() {
         local spinner_15=( "◴" "◷" "◶" "◵" )
         # shellcheck disable=SC2034
         local spinner_16=( "🕛" "🕐" "🕑" "🕒" "🕓" "🕔" "🕕" "🕖" "🕗" "🕘" "🕙" "🕚" )
+        # shellcheck disable=SC2034
+        local spinner_17=( "⠋" "⠙" "⠚" "⠞" "⠖" "⠦" "⠴" "⠲" "⠳" "⠓" )
 
         local style=${PFB_SPINNER_STYLE:-2}
 
         # Validate spinner style range
-        if ! [[ "$style" =~ ^[0-9]+$ ]] || [[ $style -lt 0 ]] || [[ $style -gt 16 ]]; then
-            echo "pfb: invalid spinner style '$style' (valid range: 0-16)" >&2
+        if ! [[ "$style" =~ ^[0-9]+$ ]] || [[ $style -lt 0 ]] || [[ $style -gt 17 ]]; then
+            echo "pfb: invalid spinner style '$style' (valid range: 0-17)" >&2
             echo "Using default spinner style 2" >&2
             style=2
         fi
@@ -361,6 +363,7 @@ pfb() {
         echo "14: Pulsing bar"
         echo "15: Segments"
         echo "16: Clock faces"
+        echo "17: Brew"
     }
 
     # Start spinner in background without running a command
