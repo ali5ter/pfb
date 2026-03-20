@@ -270,17 +270,20 @@ pfb() {
 
         trap "cursor_on >&2; stty echo; printf '\n' >&2; exit" 2
 
+        # Hint reflects the default (what Enter will do), not the current highlight
+        local hint
+        [[ "$default" == "no" ]] && hint="(y/N)" || hint="(Y/n)"
+
         cursor_off >&2
         while true; do
             cursor_sol >&2
             erase_line >&2
+            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}%s${RESET} " "$message" "$hint" >&2
             if [[ $selected -eq 0 ]]; then
-                printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}(Y/n)${RESET} " "$message" >&2
                 print_selected "Yes"
                 printf " / " >&2
                 print_option "No"
             else
-                printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}(y/N)${RESET} " "$message" >&2
                 print_option "Yes"
                 printf " / " >&2
                 print_selected "No"
