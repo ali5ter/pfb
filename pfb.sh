@@ -7,7 +7,7 @@
 # @ref https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm
 # @ref https://unix.stackexchange.com/questions/146570/arrow-key-enter-menu
 
-export PFB_VERSION="2.0.2"
+export PFB_VERSION="2.1.0"
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
 export PFB_SPINNER_STYLE="2"
@@ -247,8 +247,8 @@ pfb() {
             return "$selected"
         fi
 
-        print_option()   { printf "  %-3s" "$1" >&2; }
-        print_selected() { printf "${BOLD}${PROMPT_COLOR}> %-3s${RESET}" "$1" >&2; }
+        print_option()   { printf "  %s  " "$1" >&2; }
+        print_selected() { printf "${BOLD}${PROMPT_COLOR}${REV} %s ${RESET}" "$1" >&2; }
 
         key_input() {
             local key
@@ -270,11 +270,15 @@ pfb() {
 
         trap "cursor_on >&2; stty echo; printf '\n' >&2; exit" 2
 
+        # Hint reflects the default (what Enter will do), not the current highlight
+        local hint
+        [[ "$default" == "no" ]] && hint="(y/N)" || hint="(Y/n)"
+
         cursor_off >&2
         while true; do
             cursor_sol >&2
             erase_line >&2
-            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}(y/n)${RESET} " "$message" >&2
+            printf "${BOLD}${PROMPT_COLOR}?${RESET}${BOLD} %s${RESET} ${DIM}%s${RESET} " "$message" "$hint" >&2
             if [[ $selected -eq 0 ]]; then
                 print_selected "Yes"
                 printf " / " >&2

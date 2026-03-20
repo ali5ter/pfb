@@ -108,9 +108,17 @@ The default value is shown in brackets and used if the user presses enter withou
 
 Ask the user a yes/no question and get the result as an exit code:
 
-`pfb confirm "question"`
+`pfb confirm "question" [yes|no]`
 
-Returns exit code 0 for yes, 1 for no. Use left/right arrow keys, y/n, or enter to select.
+Returns exit code 0 for yes, 1 for no. Use left/right arrow keys, `y`/`n`, or enter to select.
+The selected option is highlighted and the hint capitalises the current default (`Y/n` or `y/N`).
+
+An optional second argument sets the default answer (default is `yes`):
+
+```bash
+pfb confirm "Delete all files?" no    # Defaults to No
+pfb confirm "Continue?" yes           # Defaults to Yes (explicit)
+```
 
 Example:
 

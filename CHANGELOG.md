@@ -2,6 +2,19 @@
 
 All notable changes to pfb are documented here.
 
+## [2.1.0] — 2026-03-20
+
+### Changed
+
+- **`pfb confirm` selection styling** (#3): The selected option now uses a
+  reverse-video background highlight instead of a `>` prefix, making the
+  active choice immediately obvious at a glance.
+
+- **`pfb confirm` capitalization hint** (#3): The `(y/n)` hint is now
+  dynamic — it shows `(Y/n)` when Yes is selected and `(y/N)` when No is
+  selected, following the long-standing Unix convention for indicating the
+  default answer.
+
 ## [2.0.2] — 2026-03-20
 
 ### Fixed
