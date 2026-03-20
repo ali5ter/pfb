@@ -2,6 +2,19 @@
 
 All notable changes to pfb are documented here.
 
+## [2.0.1] — 2026-03-20
+
+### Fixed
+
+- **`$(pfb select ...)` showed raw escape sequences** instead of the interactive menu.
+  `pfb()` was unconditionally re-calling `_pfb_set_ansi_vars` on every invocation. Inside
+  a command substitution (`$(...)`) stdout is a pipe, not a TTY, so `_pfb_set_ansi_vars`
+  would set `ESC=""` — causing cursor functions to emit `[19;1H` instead of `\033[19;1H`.
+  The re-call is now removed; source-time initialization is sufficient, and `--no-color`
+  invokes it explicitly when needed.
+- Updated `examples/select.tape` to use the new `selected=$(pfb select ...)` pattern.
+- Regenerated `select.gif`, `log-levels.gif`, `spinner.gif`, and `pfb_demo.gif`.
+
 ## [2.0.0] — 2026-03-20
 
 ### Summary

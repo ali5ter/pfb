@@ -7,7 +7,7 @@
 # @ref https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm
 # @ref https://unix.stackexchange.com/questions/146570/arrow-key-enter-menu
 
-export PFB_VERSION="2.0.0"
+export PFB_VERSION="2.0.1"
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
 export PFB_SPINNER_STYLE="2"
@@ -141,9 +141,6 @@ rgb_bg()        { printf "${ESC}[48;2;${1};${2};${3}m"; }
 # @param message  message to display
 pfb() {
     local mtype message level icon
-
-    # Re-apply ANSI vars to pick up runtime changes (e.g. --no-color flag)
-    _pfb_set_ansi_vars
 
     # shellcheck disable=SC2034
     _print_message() {

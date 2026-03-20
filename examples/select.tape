@@ -10,8 +10,7 @@ Enter
 Enter
 Type `pfb prompt "A prompt with a list of possible answers" ; \` Enter
 Type `options=('Option 1' 'Option 2' 'Option 3' 'Option 4' 'Option 5' 'Option 6') ;\` Enter
-Type `pfb select "${options[@]}" ; \` Enter
-Type `selected=$? ; \` Enter
+Type `selected=$(pfb select "${options[@]}") ; \` Enter
 Type `cursor_up ; \` Enter
 Type `erase_line ; \` Enter
 Type `pfb prompt "A prompt with a list of possible answers" ; \` Enter
