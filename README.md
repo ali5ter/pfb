@@ -25,12 +25,13 @@ pfb can be configured using environment variables:
 
 | Variable | Default | Description |
 | :------- | :------ | :---------- |
-| `PFB_SPINNER_STYLE` | `2` | Spinner style (0-16). Run `pfb test` to see all styles |
+| `PFB_SPINNER_STYLE` | `2` | Spinner style (0-17). Run `pfb test` to see all styles |
 | `PFB_DEFAULT_LOG_DIR` | `$HOME/logs` | Directory where command logs are stored |
 | `PFB_DEFAULT_LOG` | `scripts` | Base name for log files (creates `$PFB_DEFAULT_LOG.log`) |
+| `PFB_NON_INTERACTIVE` | (unset) | Set to `1` to auto-answer prompts with defaults (CI, cron, scripts) |
 | `NO_COLOR` | (unset) | Disable colors (see [no-color.org](https://no-color.org)) |
 | `PFB_NO_COLOR` | `0` | pfb-specific color disable (set to `1` to disable) |
-| `PFB_FORCE_COLOR` | (unset) | Force colors even when not a TTY |
+| `PFB_FORCE_COLOR` | (unset) | Force colors even when not a TTY (must be set before sourcing) |
 
 Example:
 
@@ -86,7 +87,7 @@ This is usefully followed up with a pfb success log level message or a pfb answe
 
 ### Text input
 
-![video of pfb inpur](examples/input.gif)
+![video of pfb input](examples/input.gif)
 
 Collect text input from the user with an optional default value:
 
@@ -134,8 +135,7 @@ Example:
 
 ```bash
 options=("Option 1" "Option 2" "Option 3")
-pfb select "${options[@]}"
-selected=$?
+selected=$(pfb select "${options[@]}")
 echo "You selected: ${options[$selected]}"
 ```
 
@@ -154,6 +154,13 @@ The pfb answer message can be used to put a formatted answer after the prompt me
 This pattern saves the cursor position after the prompt and restores it when displaying the answer, keeping everything on one line. For simple text input, use `pfb input` instead.
 
 ## Helper functions and variables
+
+Cursor helper functions and color variables are available **immediately after sourcing** `pfb.sh`
+— no prior `pfb` call is required.
+
+> **Note:** Color variables (`INFO_COLOR`, `BOLD`, `RESET`, etc.) are set to ANSI codes only when
+> stdout is a TTY at source time. In CI or piped contexts, set `PFB_FORCE_COLOR=1` **before**
+> sourcing `pfb.sh` to force colors.
 
 pfb uses ANSI/VT100 Terminal Control Escape Sequences which you can use yourself:
 
