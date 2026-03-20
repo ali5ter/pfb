@@ -6,7 +6,7 @@ Source config.tape
 Type `pfb spinner start "A default spinner message while performing some command." 'sleep 2' && pfb success "Done"`
 Enter
 Sleep 2s
-Type `pfb spinner start "Spinner message with no command." && pfb spinner stop && pfb success "Done"`
+Type `pfb spinner start "Spinner message with no command." && sleep 2 && pfb spinner stop && pfb success "Done"`
 Enter
 Sleep 2s
 Type `pfb list-spinner-styles`

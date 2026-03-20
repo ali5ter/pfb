@@ -16,8 +16,8 @@ Sleep 5s
 # Section 3: Long running commands (5s sleep + 2s pause)
 Sleep 9s
 
-# Section 4: Spinner styles (16 spinners × 2s each ≈ 32s, then 2s pause)
-Sleep 34s
+# Section 4: Spinner styles (18 spinners × 2s each = 36s, then 2s pause)
+Sleep 40s
 
 # Section 5: Text input
 # Wait for "What's your name?" prompt, then type response

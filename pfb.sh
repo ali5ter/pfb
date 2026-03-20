@@ -7,12 +7,13 @@
 # @ref https://www2.ccs.neu.edu/research/gpc/VonaUtils/vona/terminal/vtansi.htm
 # @ref https://unix.stackexchange.com/questions/146570/arrow-key-enter-menu
 
-export PFB_VERSION="2.0.1"
+export PFB_VERSION="2.0.2"
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
 export PFB_SPINNER_STYLE="2"
 export PFB_SPINNER_PID=""
 export PFB_SPINNER_FLAG=""
+export PFB_SPINNER_ROW=""
 
 # ---------------------------------------------------------------------------
 # ANSI/VT100 color and style variables
@@ -441,25 +442,31 @@ pfb() {
         PFB_SPINNER_FLAG="/tmp/pfb_spinner_$$_${RANDOM}"
         touch "$PFB_SPINNER_FLAG"
 
+        # Capture absolute row before launching background so the spinner
+        # always draws at a fixed position regardless of cursor drift from
+        # repeated cursor_up calls (one per _wait_start invocation).
+        PFB_SPINNER_ROW=$(get_cursor_row)
+
         cursor_off
 
         # Run spinner in background
         {
             local flag_file="$PFB_SPINNER_FLAG"
             local start="$start_seconds"
+            local row="$PFB_SPINNER_ROW"
             local step=0
             while [[ -f "$flag_file" ]]; do
                 local elapsed=$(( SECONDS - start ))
                 local elapsed_str=""
                 [[ $elapsed -ge 3 ]] && elapsed_str=" ${DIM}${elapsed}s${RESET}"
-                erase_sol
-                cursor_sol
+                cursor_to "$row"
+                erase_line
                 printf "${BOLD}${INFO_COLOR}[wait]${RESET} ${BOLD}${SPINNER_COLOR}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}${elapsed_str}"
                 sleep 0.08
             done
             # Clean up on exit
-            erase_sol
-            cursor_sol
+            cursor_to "$row"
+            erase_line
             cursor_on
         } 2>/dev/null &
 
@@ -496,14 +503,20 @@ pfb() {
             wait "$PFB_SPINNER_PID" 2>/dev/null
         fi
 
-        # Ensure line is cleared and cursor is on
-        erase_sol
-        cursor_sol
+        # Ensure line is cleared and cursor is on, using absolute row if available
+        if [[ -n "$PFB_SPINNER_ROW" ]]; then
+            cursor_to "$PFB_SPINNER_ROW"
+            erase_line
+        else
+            erase_sol
+            cursor_sol
+        fi
         cursor_on
 
         # Clear state
         PFB_SPINNER_PID=""
         PFB_SPINNER_FLAG=""
+        PFB_SPINNER_ROW=""
 
         # Always return success
         return 0

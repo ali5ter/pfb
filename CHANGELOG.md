@@ -2,6 +2,30 @@
 
 All notable changes to pfb are documented here.
 
+## [2.0.2] — 2026-03-20
+
+### Fixed
+
+- **Ghost spinner frame persisted on screen** during multi-spinner loops (e.g., `pfb test`
+  spinner styles section). Each `_wait_start` call issued a `cursor_up` to erase the bash
+  job-control message, causing the main-process cursor to drift one row upward per iteration.
+  The background spinner loop used relative cursor movement (`erase_sol; cursor_sol`), so it
+  drifted with the cursor — leaving the previous spinner's last frame stranded at its original
+  row with nothing to erase it.
+
+  Fix: `_wait_start` now captures the absolute terminal row before launching the background
+  process (`PFB_SPINNER_ROW=$(get_cursor_row)`). The background loop uses `cursor_to "$row"`
+  for all rendering, anchoring output to the captured row regardless of main-process cursor
+  movement. `_wait_stop` cleanup likewise uses `cursor_to "$PFB_SPINNER_ROW"`.
+
+- **`pfb_demo.tape` spinner section timing** corrected from `Sleep 34s` to `Sleep 40s`
+  (18 styles × 2 s each = 36 s + 4 s buffer; comment previously said "16 spinners").
+
+- **`examples/spinner.tape`** added `sleep 2` between the manual start and stop commands
+  so the GIF shows the spinner running before it is stopped.
+
+- Regenerated `pfb_demo.gif` and `spinner.gif`.
+
 ## [2.0.1] — 2026-03-20
 
 ### Fixed
