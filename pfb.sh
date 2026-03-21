@@ -11,6 +11,7 @@ export PFB_VERSION="2.1.0"
 export PFB_DEFAULT_LOG_DIR="${HOME}/logs"
 export PFB_DEFAULT_LOG="scripts"
 export PFB_SPINNER_STYLE="2"
+export PFB_SPINNER_LABEL="wait"
 export PFB_SPINNER_PID=""
 export PFB_SPINNER_FLAG=""
 export PFB_SPINNER_ROW=""
@@ -468,13 +469,15 @@ pfb() {
             local start="$start_seconds"
             local row="$PFB_SPINNER_ROW"
             local step=0
+            local label_pfx=""
+            [[ -n "${PFB_SPINNER_LABEL}" ]] && label_pfx="${BOLD}${INFO_COLOR}[${PFB_SPINNER_LABEL}]${RESET} "
             while [[ -f "$flag_file" ]]; do
                 local elapsed=$(( SECONDS - start ))
                 local elapsed_str=""
                 [[ $elapsed -ge 3 ]] && elapsed_str=" ${DIM}${elapsed}s${RESET}"
                 cursor_to "$row"
                 erase_line
-                printf "${BOLD}${INFO_COLOR}[wait]${RESET} ${BOLD}${SPINNER_COLOR}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}${elapsed_str}"
+                printf "${label_pfx}${BOLD}${SPINNER_COLOR}${frames[step++ % ${#frames[@]}]}${RESET} ${message}${RESET}${elapsed_str}"
                 sleep 0.08
             done
             # Clean up on exit
@@ -784,6 +787,7 @@ pfb() {
 
  Environment Variables:
    PFB_SPINNER_STYLE      Spinner animation style (0-17, default: 2)
+   PFB_SPINNER_LABEL      Spinner prefix label (default: wait, empty = no prefix)
    PFB_DEFAULT_LOG_DIR    Log directory (default: $HOME/logs)
    PFB_DEFAULT_LOG        Log basename (default: scripts)
    PFB_NON_INTERACTIVE    Set to 1 to auto-answer prompts (CI/non-TTY)

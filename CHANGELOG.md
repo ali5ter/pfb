@@ -152,7 +152,7 @@ for the string `[done]` will need to update to `[success]`.
 ### Backward Compatibility
 
 | Old pattern | Status | Migration |
-|---|---|---|
+| --- | --- | --- |
 | `pfb select ...; idx=$?` | Deprecated | `idx=$(pfb select ...)` |
 | `pfb select-from ...` | Preserved (exit-code alias) | Migrate to `pfb select` |
 | `pfb wait <msg> [cmd]` | Preserved | `pfb spinner start` |

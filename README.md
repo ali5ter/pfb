@@ -26,6 +26,7 @@ pfb can be configured using environment variables:
 | Variable | Default | Description |
 | :------- | :------ | :---------- |
 | `PFB_SPINNER_STYLE` | `2` | Spinner style (0-17). Run `pfb test` to see all styles |
+| `PFB_SPINNER_LABEL` | `wait` | Spinner prefix label. Set to empty string to suppress the prefix |
 | `PFB_DEFAULT_LOG_DIR` | `$HOME/logs` | Directory where command logs are stored |
 | `PFB_DEFAULT_LOG` | `scripts` | Base name for log files (creates `$PFB_DEFAULT_LOG.log`) |
 | `PFB_NON_INTERACTIVE` | (unset) | Set to `1` to auto-answer prompts with defaults (CI, cron, scripts) |
@@ -81,6 +82,17 @@ You can also start a spinner manually and stop it later:
 ```bash
 pfb spinner start message
 pfb spinner stop
+```
+
+The prefix label defaults to `[wait]`. Use `PFB_SPINNER_LABEL` to customise it or set it to
+empty to suppress the prefix entirely:
+
+```bash
+PFB_SPINNER_LABEL="deploy" pfb spinner start "Deploying to production..." deploy.sh
+# [deploy] ⣾ Deploying to production...
+
+PFB_SPINNER_LABEL="" pfb spinner start "Downloading..." 'curl ...'
+# ⣾ Downloading...
 ```
 
 This is usefully followed up with a pfb success log level message or a pfb answer message.
@@ -159,7 +171,8 @@ The pfb answer message can be used to put a formatted answer after the prompt me
 
 `pfb answer message`
 
-This pattern saves the cursor position after the prompt and restores it when displaying the answer, keeping everything on one line. For simple text input, use `pfb input` instead.
+This pattern saves the cursor position after the prompt and restores it when displaying the answer, keeping everything on
+one line. For simple text input, use `pfb input` instead.
 
 ## Helper functions and variables
 
@@ -227,7 +240,8 @@ Examples using RGB color functions:
 
 ## Comparison with gum
 
-[gum](https://github.com/charmbracelet/gum) is a more comprehensive TUI toolkit that offers similar functionality with additional components like file browsers, tables, pagers, and advanced text filtering.
+[gum](https://github.com/charmbracelet/gum) is a more comprehensive TUI toolkit that offers similar functionality with
+additional components like file browsers, tables, pagers, and advanced text filtering.
 
 **When to use pfb:**
 
@@ -244,4 +258,5 @@ Examples using RGB color functions:
 - Prefer standalone binaries over sourced libraries
 - Want extensive styling options via CLI flags
 
-pfb occupies the lightweight, dependency-free niche - ideal for scripts you distribute or run in constrained environments where installing external tools adds friction.
+pfb occupies the lightweight, dependency-free niche — ideal for scripts you distribute or run in constrained
+environments where installing external tools adds friction.
