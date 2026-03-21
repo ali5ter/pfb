@@ -741,6 +741,7 @@ pfb() {
  Usage: pfb <command> [args...]
 
  Quick Start Examples:
+   pfb test                                    # Live demo of all features
    pfb info "Starting process..."              # Display info message
    pfb spinner start "Loading..." 'sleep 2'   # Show spinner during command
    pfb confirm "Continue?" && next_step        # Ask yes/no question
