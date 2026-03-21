@@ -663,10 +663,12 @@ pfb() {
         echo
         local prog_total=30
         for (( i=1; i<=prog_total; i++ )); do
-            pfb progress "$i" "$prog_total" "Processing files..."
+            pfb progress "$i" "$prog_total" "Processing knickknack..."
             sleep 0.1
         done
-        pfb success "All files processed!"
+        cursor_up
+        erase_line
+        pfb success "All knickknacks processed!"
 
         sleep 2 && clear
 
