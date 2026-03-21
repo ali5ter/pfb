@@ -2,6 +2,64 @@
 
 All notable changes to pfb are documented here.
 
+## [2.2.0] — 2026-03-21
+
+### New Features
+
+- **`pfb progress`** (#8): Determinate progress bar for batch operations with
+  a known completion count. Adapts to terminal width, respects `PFB_SPINNER_LABEL`
+  for the prefix, and degrades gracefully to ASCII `[===   ]` when `NO_COLOR` is set.
+
+  ```bash
+  for i in "${!files[@]}"; do
+      process "${files[$i]}"
+      pfb progress $(( i + 1 )) ${#files[@]} "Processing files..."
+  done
+  pfb success "All files processed!"
+  ```
+
+- **`PFB_SPINNER_LABEL`** (#9): Configurable prefix label for spinners and the
+  progress bar (default: `wait`). Set to an empty string to suppress the prefix
+  entirely.
+
+  ```bash
+  PFB_SPINNER_LABEL="deploy" pfb spinner start "Deploying..." deploy.sh
+  PFB_SPINNER_LABEL="" pfb spinner start "Downloading..."
+  ```
+
+- **Bash version guard** (#13): Sourcing `pfb.sh` on Bash < 4.0 now prints a
+  clear error with an upgrade hint (`brew install bash` on macOS) and exits
+  gracefully instead of producing cryptic failures.
+
+### Fixed
+
+- **`pfb heading` locale-string quoting** (#11): Removed `$"..."` syntax which
+  caused a literal `$` to appear in headings on some locales.
+
+- **Spinner overlap on `pfb info` / `pfb warn`** (#10): An active spinner is
+  now stopped before displaying an info or warn message, preventing output from
+  being overwritten.
+
+- **Cursor not restored on interrupted `pfb confirm` / `pfb select`** (#12):
+  An `INT`/`TERM`/`HUP` trap now restores the cursor and terminal state if the
+  user interrupts an interactive prompt.
+
+- **EXIT trap propagating into subshells** (regression from #12): Using `EXIT`
+  in the trap caused it to fire inside every `$(...)` subshell (e.g. each
+  keypress read), corrupting cursor position. Changed to `INT TERM HUP` with an
+  explicit `trap -` reset on the normal exit path.
+
+### Enhancements
+
+- **`pfb test` in `--help` Quick Start** (#14): The live demo command is now
+  shown in the Quick Start section of the help output.
+
+### Internal
+
+- **`_progress()` private function**: Progress bar rendering extracted from the
+  `progress)` case branch into a dedicated `_progress()` function, consistent
+  with `_confirm()`, `_select_option()`, `_wait_start()`, and `_wait_stop()`.
+
 ## [2.1.0] — 2026-03-20
 
 ### Changed
