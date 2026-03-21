@@ -15,6 +15,7 @@ export PFB_SPINNER_LABEL="wait"
 export PFB_SPINNER_PID=""
 export PFB_SPINNER_FLAG=""
 export PFB_SPINNER_ROW=""
+export PFB_PROGRESS_ROW=""
 
 # Require Bash 4.0+ for nameref support (local -n) used in _get_spinner_frames
 if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
@@ -657,6 +658,18 @@ pfb() {
 
         sleep 2 && clear
 
+        pfb heading "Progress bar:"
+        pfb subheading "Use pfb progress <current> <total> [message] for batch operations."
+        echo
+        local prog_total=30
+        for (( i=1; i<=prog_total; i++ )); do
+            pfb progress "$i" "$prog_total" "Processing files..."
+            sleep 0.1
+        done
+        pfb success "All files processed!"
+
+        sleep 2 && clear
+
         pfb heading "Confirm prompts:"
         pfb subheading "Use left/right arrows, y/n, or enter to select. Returns 0 for yes, 1 for no."
         echo
@@ -710,7 +723,7 @@ pfb() {
         local commands=(
             "info" "warn" "error" "success" "err"
             "heading" "subheading" "suggestion"
-            "spinner" "wait" "wait-stop"
+            "spinner" "wait" "wait-stop" "progress"
             "confirm" "input" "select" "select-from"
             "prompt" "answer"
             "test" "list-spinner-styles" "logfile"
@@ -747,6 +760,7 @@ pfb() {
    pfb test                                    # Live demo of all features
    pfb info "Starting process..."              # Display info message
    pfb spinner start "Loading..." 'sleep 2'   # Show spinner during command
+   pfb progress 42 100 "Downloading..."        # Show 42% progress bar
    pfb confirm "Continue?" && next_step        # Ask yes/no question
    name=$(pfb input "Your name?" "Anonymous")  # Get text input
 
@@ -768,6 +782,7 @@ pfb() {
 
    spinner start <msg> [cmd]  Start spinner (optionally with command)
    spinner stop               Stop active spinner
+   progress <n> <total> [msg] Render determinate progress bar
 
    confirm <question> [yes|no]   Yes/no confirmation (exit code 0/1)
    input <prompt> [default]      Get text input (result via stdout)
@@ -937,6 +952,87 @@ EOF
             message="${message}
 "
             _print_message
+            ;;
+        progress)
+            # @param current  number of items completed (non-negative integer)
+            # @param total    total number of items (positive integer)
+            # @param message  optional label displayed after the percentage
+            local prog_current="${2:-}"
+            local prog_total="${3:-}"
+            local prog_msg="${4:-}"
+            if [[ -z "$prog_current" || -z "$prog_total" ]]; then
+                echo "pfb: progress requires current and total arguments" >&2
+                echo "Usage: pfb progress <current> <total> [message]" >&2
+                echo "Example: pfb progress 42 100 \"Downloading...\"" >&2
+                return 1
+            fi
+            if ! [[ "$prog_current" =~ ^[0-9]+$ && "$prog_total" =~ ^[0-9]+$ ]]; then
+                echo "pfb: progress arguments must be non-negative integers" >&2
+                return 1
+            fi
+            if [[ $prog_total -eq 0 ]]; then
+                echo "pfb: progress total must be greater than zero" >&2
+                return 1
+            fi
+            _wait_stop 2>/dev/null
+            # Clamp current to total
+            [[ $prog_current -gt $prog_total ]] && prog_current=$prog_total
+            # Percentage
+            local prog_pct=$(( prog_current * 100 / prog_total ))
+            # Terminal character width — use tput cols directly to avoid COLUMNS
+            # being set to pixel width (e.g. in VHS/recorded environments)
+            local prog_cols
+            prog_cols=$(tput cols 2>/dev/null)
+            [[ -z "$prog_cols" || $prog_cols -le 0 ]] && prog_cols=80
+            # Label prefix (plain for width calc, colored for output)
+            local prog_label_plain="" prog_label_colored=""
+            if [[ -n "${PFB_SPINNER_LABEL}" ]]; then
+                prog_label_plain="[${PFB_SPINNER_LABEL}] "
+                prog_label_colored="${BOLD}${INFO_COLOR}[${PFB_SPINNER_LABEL}]${RESET} "
+            fi
+            # Bar width: cols − label − " NNN%" (5) − optional message
+            # No-color adds 2 chars for brackets; calculate for color mode and clamp
+            local prog_msg_part="${prog_msg:+ $prog_msg}"
+            local prog_overhead=$(( ${#prog_label_plain} + 5 + ${#prog_msg_part} ))
+            local prog_bar_width=$(( prog_cols - prog_overhead ))
+            [[ $prog_bar_width -lt 10 ]] && prog_bar_width=10
+            # Filled and empty cell counts
+            local prog_filled=$(( prog_current * prog_bar_width / prog_total ))
+            local prog_empty=$(( prog_bar_width - prog_filled ))
+            # Build bar strings using pure bash string repetition
+            local prog_filled_str="" prog_empty_str=""
+            [[ $prog_filled -gt 0 ]] && printf -v prog_filled_str '%*s' "$prog_filled" ''
+            [[ $prog_empty  -gt 0 ]] && printf -v prog_empty_str  '%*s' "$prog_empty"  ''
+            # Percentage string (right-aligned to 3 digits)
+            local prog_pct_str
+            printf -v prog_pct_str '%3d%%' "$prog_pct"
+            # Build output string
+            local prog_out
+            if [[ -n "${RESET}" ]]; then
+                prog_filled_str="${prog_filled_str// /█}"
+                prog_empty_str="${prog_empty_str// /░}"
+                prog_out="${prog_label_colored}${SUCCESS_COLOR}${prog_filled_str}${DIM}${prog_empty_str}${RESET} ${BOLD}${prog_pct_str}${RESET}${prog_msg_part}"
+            else
+                # Shrink bar by 2 to account for the [ ] brackets in no-color mode
+                local prog_nc_width=$(( prog_bar_width - 2 ))
+                [[ $prog_nc_width -lt 1 ]] && prog_nc_width=1
+                prog_filled=$(( prog_current * prog_nc_width / prog_total ))
+                prog_empty=$(( prog_nc_width - prog_filled ))
+                printf -v prog_filled_str '%*s' "$prog_filled" ''
+                printf -v prog_empty_str  '%*s' "$prog_empty"  ''
+                prog_filled_str="${prog_filled_str// /=}"
+                prog_out="${prog_label_plain}[${prog_filled_str}${prog_empty_str}] ${prog_pct_str}${prog_msg_part}"
+            fi
+            # Absolute row positioning (mirrors spinner) avoids \r failing when
+            # bar content reaches terminal width and the cursor wraps to the next line
+            [[ -z "$PFB_PROGRESS_ROW" ]] && PFB_PROGRESS_ROW=$(get_cursor_row)
+            cursor_to "$PFB_PROGRESS_ROW" >&2
+            erase_line >&2
+            printf '%s' "$prog_out" >&2
+            if [[ $prog_current -ge $prog_total ]]; then
+                printf '\n' >&2
+                PFB_PROGRESS_ROW=""
+            fi
             ;;
         heading)
             if [[ -z "$message" ]]; then

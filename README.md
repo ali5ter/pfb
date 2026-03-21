@@ -26,7 +26,7 @@ pfb can be configured using environment variables:
 | Variable | Default | Description |
 | :------- | :------ | :---------- |
 | `PFB_SPINNER_STYLE` | `2` | Spinner style (0-17). Run `pfb test` to see all styles |
-| `PFB_SPINNER_LABEL` | `wait` | Spinner prefix label. Set to empty string to suppress the prefix |
+| `PFB_SPINNER_LABEL` | `wait` | Spinner/progress prefix label. Set to empty string to suppress the prefix |
 | `PFB_DEFAULT_LOG_DIR` | `$HOME/logs` | Directory where command logs are stored |
 | `PFB_DEFAULT_LOG` | `scripts` | Base name for log files (creates `$PFB_DEFAULT_LOG.log`) |
 | `PFB_NON_INTERACTIVE` | (unset) | Set to `1` to auto-answer prompts with defaults (CI, cron, scripts) |
@@ -96,6 +96,38 @@ PFB_SPINNER_LABEL="" pfb spinner start "Downloading..." 'curl ...'
 ```
 
 This is usefully followed up with a pfb success log level message or a pfb answer message.
+
+### Progress bar
+
+![video of pfb progress bar](examples/progress.gif)
+
+For operations with a known completion percentage, use the determinate progress bar:
+
+`pfb progress <current> <total> [message]`
+
+Each call redraws on the same line. Follow the loop with a log-level message to signal
+completion:
+
+```bash
+files=(*.log)
+for i in "${!files[@]}"; do
+    process "${files[$i]}"
+    pfb progress $(( i + 1 )) ${#files[@]} "Processing files..."
+done
+pfb success "All files processed!"
+```
+
+The bar adapts to the terminal width and respects `PFB_SPINNER_LABEL` for the prefix
+(including the empty-string no-prefix option). Colors degrade to ASCII `=` characters
+when `NO_COLOR` is set:
+
+```bash
+# Color mode (default)
+# [wait] ████████████░░░░░░░░░░░░░░░  42% Downloading...
+
+# No-color mode
+# [wait] [============               ]  42% Downloading...
+```
 
 ### Text input
 
