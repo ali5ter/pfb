@@ -4,36 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-pfb (pretty feedback for bash) is a lightweight, dependency-free Bash library that provides terminal UI components and feedback mechanisms for shell scripts. The entire library is contained in a single `pfb.sh` file that can be sourced into any Bash script.
+pfb (pretty feedback for bash) is a lightweight, dependency-free Bash library that provides terminal UI components and
+feedback mechanisms for shell scripts. The entire library is contained in a single `pfb.sh` file that can be sourced
+into any Bash script.
 
 ## Core Architecture
 
 ### Single-File Design
+
 The entire library exists in `pfb.sh`. This file must:
+
 - Be sourceable with `source pfb.sh`
 - Work on bash 4.0+ with zero dependencies
 - Be completely self-contained (no external binaries except standard UNIX utilities)
 
 ### Key Design Patterns
 
-**ANSI/VT100 Terminal Control**: All visual output uses ANSI escape sequences defined in `_pfb_set_ansi_vars()`, called once at source time. The library provides cursor control, color management, and screen manipulation primitives.
+**ANSI/VT100 Terminal Control**: All visual output uses ANSI escape sequences defined in `_pfb_set_ansi_vars()`, called
+once at source time. The library provides cursor control, color management, and screen manipulation primitives.
 
-**Function Namespace**: All internal functions are prefixed with `_` (e.g., `_wait_start`, `_print_message`). The public API is accessed via the main `pfb()` function which routes to internal implementations based on the first argument.
+**Function Namespace**: All internal functions are prefixed with `_` (e.g., `_wait_start`, `_print_message`). The public
+API is accessed via the main `pfb()` function which routes to internal implementations based on the first argument.
 
-**Spinner Management**: Background spinner processes use a flag file (`/tmp/pfb_spinner_$$_${RANDOM}`) for synchronization. The spinner PID and flag path are stored in `PFB_SPINNER_PID` and `PFB_SPINNER_FLAG`. The `_wait_stop()` function MUST be synchronous to prevent race conditions.
+**Spinner Management**: Background spinner processes use a flag file (`/tmp/pfb_spinner_$$_${RANDOM}`) for
+synchronization. The spinner PID and flag path are stored in `PFB_SPINNER_PID` and `PFB_SPINNER_FLAG`. The
+`_wait_stop()` function MUST be synchronous to prevent race conditions.
 
-**Cursor Position Save/Restore**: The prompt/answer pattern uses `save_pos()` and `restore_pos()` to maintain cursor position across multi-step interactions. This is critical for inline feedback.
+**Cursor Position Save/Restore**: The prompt/answer pattern uses `save_pos()` and `restore_pos()` to maintain cursor
+position across multi-step interactions. This is critical for inline feedback.
 
 ## Configuration
 
 Environment variables controlling behaviour (set before sourcing pfb.sh):
+
 - `PFB_SPINNER_STYLE` (default: 2) — Spinner animation style (0-17)
 - `PFB_DEFAULT_LOG_DIR` (default: `$HOME/logs`) — Command log directory
 - `PFB_DEFAULT_LOG` (default: "scripts") — Log file basename
 - `PFB_NON_INTERACTIVE` (default: unset) — Set to `1` to auto-answer prompts (CI/cron)
 - `PFB_FORCE_COLOR` (default: unset) — Force colors even when stdout is not a TTY
 - `PFB_NO_COLOR` (default: 0) — Set to `1` to disable colors
-- `NO_COLOR` (default: unset) — Standard color-disable flag (https://no-color.org)
+- `NO_COLOR` (default: unset) — Standard color-disable flag (<https://no-color.org>)
 
 ## Public API Commands
 
@@ -46,7 +56,8 @@ Access all functionality via: `pfb <command> [args...]`
 **Prompt pattern**: `prompt`, `answer`
 **Utilities**: `test`, `list-spinner-styles`, `logfile`
 
-**Backward compatibility**: The old commands (`wait`, `wait-stop`, `select-from`) continue to work as redirects to the new API.
+**Backward compatibility**: The old commands (`wait`, `wait-stop`, `select-from`) continue to work as redirects to the
+new API.
 
 ## Testing and Development
 
@@ -65,6 +76,7 @@ cd examples
 ```
 
 **VHS tapes** in `examples/` directory:
+
 - All tapes source `config.tape` for consistent styling
 - Each tape corresponds to a feature demo (e.g., `spinner.tape` → `spinner.gif`)
 - The `run_vhs.sh` script skips `config.tape` when generating all
@@ -85,11 +97,13 @@ ffmpeg -y -i file.gif -vf "select=eq(n\,$((count * 95 / 100))),scale=1024:-1" \
 **Basic colors**: 8 ANSI colors available as foreground (`BLACK`, `RED`, etc.) and background (`BBLACK`, `BRED`, etc.)
 
 **RGB colors**: Use `rgb_fg(r, g, b)` and `rgb_bg(r, g, b)` for 24-bit color:
+
 ```bash
 printf "$(rgb_fg 215 119 87)Orange text${RESET}\n"
 ```
 
 **Semantic colors**: Pre-defined RGB colors for consistency:
+
 - `INFO_COLOR` - Soft blue-cyan (100, 180, 220)
 - `WARN_COLOR` - Warm amber (255, 180, 80)
 - `ERROR_COLOR` - Clear red (240, 90, 90)
@@ -101,7 +115,9 @@ Always use `${RESET}` to clear formatting.
 
 ## Key Implementation Details
 
-**Spinner cleanup**: The spinner background process cleanup in `_wait_stop()` (called by `pfb spinner stop`) follows this sequence:
+**Spinner cleanup**: The spinner background process cleanup in `_wait_stop()` (called by `pfb spinner stop`) follows
+this sequence:
+
 1. Remove flag file to signal stop
 2. Wait up to 0.5s for graceful exit
 3. Force kill if still running
@@ -122,6 +138,7 @@ and wipe `ESC=""`, corrupting all cursor sequences.
 ## Cursor Control Functions
 
 Low-level cursor control is available for custom UI:
+
 - `cursor_on`, `cursor_off` - Visibility
 - `get_cursor_row`, `get_cursor_col` - Position queries
 - `cursor_to row [col]`, `cursor_up`, `cursor_down`, `cursor_sol` - Movement
@@ -130,7 +147,8 @@ Low-level cursor control is available for custom UI:
 
 ## Logging
 
-Commands run via `pfb spinner start "message" command` are logged to `$PFB_DEFAULT_LOG_DIR/$PFB_DEFAULT_LOG.log` with command and output.
+Commands run via `pfb spinner start "message" command` are logged to `$PFB_DEFAULT_LOG_DIR/$PFB_DEFAULT_LOG.log`
+with command and output.
 
 ## Compatibility Notes
 
