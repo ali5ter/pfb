@@ -15,6 +15,13 @@ export PFB_SPINNER_PID=""
 export PFB_SPINNER_FLAG=""
 export PFB_SPINNER_ROW=""
 
+# Require Bash 4.0+ for nameref support (local -n) used in _get_spinner_frames
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+    printf "pfb: requires Bash 4.0 or later (current: %s)\n" "$BASH_VERSION" >&2
+    printf "On macOS: brew install bash\n" >&2
+    return 1 2>/dev/null || exit 1
+fi
+
 # ---------------------------------------------------------------------------
 # ANSI/VT100 color and style variables
 # Set once at source time. Use PFB_FORCE_COLOR=1 before sourcing to force
