@@ -854,6 +854,7 @@ EOF
                 echo "Example: pfb info \"Processing complete\"" >&2
                 return 1
             fi
+            _wait_stop
             level="${INFO_COLOR}[info] "
             message="${message}
 "
@@ -866,6 +867,7 @@ EOF
                 echo "Example: pfb warn \"Low disk space detected\"" >&2
                 return 1
             fi
+            _wait_stop
             level="${WARN_COLOR}[warn] "
             message="${message}
 "
