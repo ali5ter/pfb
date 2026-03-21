@@ -181,7 +181,7 @@ pfb() {
         for (( i=0; i<${#options[@]}; i++ )); do echo >&2; done
         last_row="$(get_cursor_row)"
         start_row=$((last_row - ${#options[@]}))
-        trap "cursor_on >&2; stty echo; printf '\n' >&2; exit" 2
+        trap "cursor_on >&2; stty echo; printf '\n' >&2; exit" EXIT INT TERM HUP
         cursor_off >&2
         selected=0
 
@@ -268,7 +268,7 @@ pfb() {
             esac
         }
 
-        trap "cursor_on >&2; stty echo; printf '\n' >&2; exit" 2
+        trap "cursor_on >&2; stty echo; printf '\n' >&2; exit" EXIT INT TERM HUP
 
         # Hint reflects the default (what Enter will do), not the current highlight
         local hint
