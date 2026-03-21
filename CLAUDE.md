@@ -38,6 +38,7 @@ position across multi-step interactions. This is critical for inline feedback.
 Environment variables controlling behaviour (set before sourcing pfb.sh):
 
 - `PFB_SPINNER_STYLE` (default: 2) — Spinner animation style (0-17)
+- `PFB_SPINNER_LABEL` (default: `"wait"`) — Prefix label for spinner and progress bar; set to `""` to suppress
 - `PFB_DEFAULT_LOG_DIR` (default: `$HOME/logs`) — Command log directory
 - `PFB_DEFAULT_LOG` (default: "scripts") — Log file basename
 - `PFB_NON_INTERACTIVE` (default: unset) — Set to `1` to auto-answer prompts (CI/cron)
@@ -52,6 +53,7 @@ Access all functionality via: `pfb <command> [args...]`
 **Log levels**: `info`, `warn`, `err`, `success`
 **Headings**: `heading`, `subheading`, `suggestion`
 **Spinners**: `spinner start` (with optional command), `spinner stop`
+**Progress**: `progress <current> <total> [message]`
 **Input**: `input`, `confirm`, `select`
 **Prompt pattern**: `prompt`, `answer`
 **Utilities**: `test`, `list-spinner-styles`, `logfile`
@@ -78,7 +80,7 @@ cd examples
 **VHS tapes** in `examples/` directory:
 
 - All tapes source `config.tape` for consistent styling
-- Each tape corresponds to a feature demo (e.g., `spinner.tape` → `spinner.gif`)
+- Each tape corresponds to a feature demo (e.g., `spinner.tape` → `spinner.gif`, `progress.tape` → `progress.gif`)
 - The `run_vhs.sh` script skips `config.tape` when generating all
 
 **Visual review after regeneration**: Extract frames with ffmpeg and read them as images
@@ -123,9 +125,23 @@ this sequence:
 3. Force kill if still running
 4. Clear line and restore cursor
 
+**Bash version guard**: At source time, pfb checks that Bash 4.0+ is in use. If not, it prints
+an actionable error identifying the exact version found and exits/returns gracefully.
+
 **Confirm prompts**: Accept y/n keys, arrow keys for navigation, and enter to select.
 Default is "Yes"; pass an optional second arg to change: `pfb confirm "Delete?" no`.
 All interactive UI writes to stderr; exit code 0 = yes, 1 = no.
+
+**Trap discipline in interactive commands**: Use `trap ... INT TERM HUP` — never `EXIT`.
+EXIT traps propagate into `$(...)` subshells, causing cleanup to fire on every keypress
+(each key read internally uses a subshell). This corrupts cursor position. Always reset
+with `trap - INT TERM HUP` on the normal-exit path before returning.
+
+**Progress bar**: `pfb progress <current> <total> [message]` renders a determinate bar.
+Uses `PFB_PROGRESS_ROW` (captured before the loop via `cursor_to`) for absolute row positioning —
+same pattern as `PFB_SPINNER_ROW` in the spinner. This prevents staircase rendering when bar
+content wraps at terminal width. Color mode: `█`/`░` with SUCCESS_COLOR/DIM. No-color mode:
+ASCII `[===   ]` brackets. Respects `PFB_SPINNER_LABEL` for the prefix (empty string suppresses).
 
 **Select**: Uses arrow keys only. Returns selected index via stdout — capture with
 `selected=$(pfb select ...)`. The legacy `select-from` alias returns via exit code (`$?`) for
