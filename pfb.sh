@@ -931,7 +931,7 @@ EOF
             fi
             echo
             icon="${3:-§}"
-            message=$"${BOLD}${message}
+            message="${BOLD}${message}
 "
             _print_message
             ;;
