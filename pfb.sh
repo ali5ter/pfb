@@ -1025,12 +1025,18 @@ EOF
             fi
             # Absolute row positioning (mirrors spinner) avoids \r failing when
             # bar content reaches terminal width and the cursor wraps to the next line
-            [[ -z "$PFB_PROGRESS_ROW" ]] && PFB_PROGRESS_ROW=$(get_cursor_row)
+            if [[ -z "$PFB_PROGRESS_ROW" ]]; then
+                PFB_PROGRESS_ROW=$(get_cursor_row)
+                cursor_off >&2
+                trap "cursor_on >&2; printf '\n' >&2; PFB_PROGRESS_ROW=''; trap - INT TERM HUP; exit" INT TERM HUP
+            fi
             cursor_to "$PFB_PROGRESS_ROW" >&2
             erase_line >&2
             printf '%s' "$prog_out" >&2
             if [[ $prog_current -ge $prog_total ]]; then
                 printf '\n' >&2
+                cursor_on >&2
+                trap - INT TERM HUP
                 PFB_PROGRESS_ROW=""
             fi
             ;;
