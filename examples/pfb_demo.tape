@@ -44,7 +44,10 @@ Sleep 500ms
 Enter
 Sleep 5s
 
-# Section 8: Confirmation prompt
+# Section 8: Progress bar (30 steps × 0.1s each = 3s + 2s pause)
+Sleep 7s
+
+# Section 9: Confirmation prompt
 # Toggle with arrows to show interaction, then confirm
 Sleep 1s
 Right      # Switch to "No"

@@ -3,9 +3,15 @@ Output progress.gif
 Set Height 200
 Source config.tape
 
-Type `for i in {1..30}; do pfb progress $i 30 "Downloading file..."; sleep 0.1; done`
+Type `for i in {1..30} ; do \`
 Enter
-Sleep 500ms
+Type `  pfb progress $i 30 "Downloading file..." ; \`
+Enter
+Type `  sleep 0.1 ; \`
+Enter
+Type `done`
+Enter
+Sleep 4s
 Type `pfb success "Download complete!"`
 Enter
-Sleep 3
+Sleep 3s
