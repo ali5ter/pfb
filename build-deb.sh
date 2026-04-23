@@ -19,7 +19,7 @@ readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _TMPDIR=""  # script-level so the EXIT trap can reach it after main() returns
 readonly PFB_SH="${SCRIPT_DIR}/pfb.sh"
 readonly OUTPUT_DIR="${1:-${SCRIPT_DIR}}"
-readonly INSTALL_PATH="/usr/lib/pfb/pfb.sh"
+readonly INSTALL_PATH="/usr/bin/pfb"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -102,8 +102,9 @@ EOF
 
     # --- data -----------------------------------------------------------------
     local data_root="${tmpdir}/data"
-    mkdir -p "${data_root}/usr/lib/pfb"
-    cp "$PFB_SH" "${data_root}/usr/lib/pfb/pfb.sh"
+    mkdir -p "${data_root}/usr/bin"
+    cp "$PFB_SH" "${data_root}/usr/bin/pfb"
+    chmod 755 "${data_root}/usr/bin/pfb"
 
     local f_data_tar="${tmpdir}/data.tar.gz"
     tar -czf "$f_data_tar" -C "$data_root" usr
@@ -120,7 +121,9 @@ EOF
 
     _msg ok "built: ${deb_path} ($(wc -c < "$deb_path" | tr -d ' ') bytes)"
     printf "\nInstall with:\n\n"
-    printf "  sudo dpkg -i %s\n" "$deb_path"
+    printf "  sudo dpkg -i %s\n\n" "$deb_path"
+    printf "pfb is then available as a command and can be sourced:\n\n"
+    printf "  pfb info \"hello\"\n"
     printf "  source %s\n\n" "$INSTALL_PATH"
 }
 

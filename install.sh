@@ -10,8 +10,8 @@
 # @exit 0 Success
 # @exit 1 Download or install failure
 
-readonly INSTALL_DIR="${HOME}/.local/lib/pfb"
-readonly INSTALL_PATH="${INSTALL_DIR}/pfb.sh"
+readonly INSTALL_DIR="${HOME}/.local/bin"
+readonly INSTALL_PATH="${INSTALL_DIR}/pfb"
 readonly SOURCE_URL="https://raw.githubusercontent.com/ali5ter/pfb/main/pfb.sh"
 
 # @description Print a formatted status line to stderr.
@@ -78,9 +78,10 @@ main() {
             local deb_file="${tmpdir}/pfb.deb"
             if _download "$deb_url" > "$deb_file"; then
                 sudo dpkg -i "$deb_file" && {
-                    _msg ok "installed via dpkg → /usr/lib/pfb/pfb.sh"
-                    printf "\nAdd this line to your script to source pfb:\n\n"
-                    printf "  source \"/usr/lib/pfb/pfb.sh\"\n\n"
+                    _msg ok "installed via dpkg → /usr/bin/pfb"
+                    printf "\npfb is now available as a command and can be sourced:\n\n"
+                    printf "  pfb info \"hello\"\n"
+                    printf "  source \"/usr/bin/pfb\"\n\n"
                     return 0
                 }
             fi
@@ -94,10 +95,11 @@ main() {
         brew tap ali5ter/pfb 2>&1 | sed 's/^/  /'
         brew install pfb 2>&1 | sed 's/^/  /'
         local brew_path
-        brew_path="$(brew --prefix)/lib/pfb/pfb.sh"
+        brew_path="$(brew --prefix)/bin/pfb"
         if [[ -f "$brew_path" ]]; then
             _msg ok "installed via Homebrew → ${brew_path}"
-            printf "\nAdd this line to your script to source pfb:\n\n"
+            printf "\npfb is now available as a command and can be sourced:\n\n"
+            printf "  pfb info \"hello\"\n"
             printf "  source \"%s\"\n\n" "$brew_path"
             return 0
         fi
@@ -142,19 +144,19 @@ main() {
     # --- Install --------------------------------------------------------------
     mkdir -p "$INSTALL_DIR" || { _msg error "could not create ${INSTALL_DIR}"; exit 1; }
     cp "$tmpfile" "$INSTALL_PATH" || { _msg error "could not write to ${INSTALL_PATH}"; exit 1; }
-    chmod 644 "$INSTALL_PATH"
+    chmod 755 "$INSTALL_PATH"
 
     _msg ok "installed v${new_version} → ${INSTALL_PATH}"
 
     # --- Print usage ----------------------------------------------------------
-    printf "\nAdd this line to your script to source pfb:\n\n"
+    printf "\npfb is now available as a command and can be sourced:\n\n"
+    printf "  pfb info \"hello\"\n"
     printf "  source \"%s\"\n" "$INSTALL_PATH"
     printf "\nFor portability across install methods, use a path fallback:\n\n"
     printf "  for _pfb in \\\\\n"
-    printf "      \"\$(brew --prefix 2>/dev/null)/lib/pfb/pfb.sh\" \\\\\n"
-    printf "      /usr/local/lib/pfb/pfb.sh \\\\\n"
-    printf "      /usr/lib/pfb/pfb.sh \\\\\n"
-    printf "      ~/.local/lib/pfb/pfb.sh; do\n"
+    printf "      \"\$(brew --prefix 2>/dev/null)/bin/pfb\" \\\\\n"
+    printf "      /usr/bin/pfb \\\\\n"
+    printf "      ~/.local/bin/pfb; do\n"
     printf "      [[ -f \"\$_pfb\" ]] && { source \"\$_pfb\"; unset _pfb; break; }\n"
     printf "  done\n\n"
 }
