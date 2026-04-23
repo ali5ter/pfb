@@ -62,6 +62,32 @@ _local_pfb() {
 main() {
     printf "\npfb installer\n\n"
 
+    # --- Delegate to apt if available (Debian/Ubuntu) -------------------------
+    if command -v apt &>/dev/null && command -v dpkg &>/dev/null; then
+        _msg info "apt detected — downloading latest .deb from GitHub Releases"
+        local deb_url tmpdir
+        deb_url="$(curl -fsSL https://api.github.com/repos/ali5ter/pfb/releases/latest \
+            | grep '"browser_download_url"' \
+            | grep '_all\.deb"' \
+            | sed 's/.*"browser_download_url": "//;s/".*//')"
+        if [[ -z "$deb_url" ]]; then
+            _msg warn "no .deb asset found in latest release — falling back to direct install"
+        else
+            tmpdir="$(mktemp -d /tmp/pfb.XXXXXX)"
+            trap 'rm -rf "$tmpdir"' EXIT
+            local deb_file="${tmpdir}/pfb.deb"
+            if _download "$deb_url" > "$deb_file"; then
+                sudo dpkg -i "$deb_file" && {
+                    _msg ok "installed via dpkg → /usr/lib/pfb/pfb.sh"
+                    printf "\nAdd this line to your script to source pfb:\n\n"
+                    printf "  source \"/usr/lib/pfb/pfb.sh\"\n\n"
+                    return 0
+                }
+            fi
+            _msg warn "dpkg install failed — falling back to direct install"
+        fi
+    fi
+
     # --- Delegate to Homebrew if available ------------------------------------
     if command -v brew &>/dev/null; then
         _msg info "Homebrew detected — installing via tap"

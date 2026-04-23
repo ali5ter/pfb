@@ -12,6 +12,22 @@
 
 ## Installation
 
+### Debian / Ubuntu
+
+```bash
+curl -sL https://raw.githubusercontent.com/ali5ter/pfb/main/install.sh | bash
+```
+
+The installer detects `apt`/`dpkg` and downloads the `.deb` from the latest GitHub Release automatically.
+To install manually:
+
+```bash
+# Download the .deb from https://github.com/ali5ter/pfb/releases/latest
+sudo dpkg -i pfb_<version>_all.deb
+```
+
+Installs `pfb.sh` to `/usr/lib/pfb/pfb.sh`.
+
 ### Homebrew (macOS)
 
 ```bash
