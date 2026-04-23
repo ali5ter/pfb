@@ -172,3 +172,28 @@ with command and output.
 - Uses `disown` to detach background processes
 - Terminal must support ANSI/VT100 escape sequences
 - The `_wait()` function uses job control tricks to suppress Bash background job messages
+
+## Release Checklist
+
+Every release requires these steps **in order**:
+
+1. Bump `PFB_VERSION` in `pfb.sh` to match the new tag
+2. Commit, push, tag, and create the GitHub release (`/promote`)
+3. Build the `.deb` and upload to the release:
+
+   ```bash
+   bash build-deb.sh /tmp/pfb-deb-out
+   gh release upload v<version> /tmp/pfb-deb-out/pfb_<version>_all.deb
+   ```
+
+4. Get the SHA256 of the new release tarball and update the Homebrew formula in
+   [ali5ter/homebrew-pfb](https://github.com/ali5ter/homebrew-pfb):
+
+   ```bash
+   curl -sL https://github.com/ali5ter/pfb/archive/refs/tags/v<version>.tar.gz | shasum -a 256
+   # Edit /tmp/homebrew-pfb/Formula/pfb.rb (or clone the tap repo fresh)
+   # Update url and sha256, commit, push
+   ```
+
+**Note:** The tap repo (`ali5ter/homebrew-pfb`) is a separate repository. Clone it alongside
+this one if working on releases frequently.
