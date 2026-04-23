@@ -10,14 +10,54 @@
 
 ![video of pfb example output](examples/pfb_demo.gif)
 
+## Installation
+
+### One-line installer (recommended)
+
+```bash
+curl -sL https://raw.githubusercontent.com/ali5ter/pfb/main/install.sh | bash
+```
+
+This installs `pfb.sh` to `~/.local/lib/pfb/pfb.sh` and prints the `source` line to add to your scripts.
+Re-running is safe — the installer is idempotent.
+
+### Git submodule
+
+For projects that pin pfb at a specific version:
+
+```bash
+git submodule add https://github.com/ali5ter/pfb lib/pfb
+```
+
+Then source it in your scripts with `source lib/pfb/pfb.sh`.
+
+### Manual
+
+Download `pfb.sh` from a [GitHub release](https://github.com/ali5ter/pfb/releases) and place it anywhere on your path.
+
 ## Usage
 
-Use the functions in this script by sourcing it in your scripts, e.g.
-`source [path_to]/pfb.sh`
+Source pfb in your scripts:
 
-An example of pretty feedback provided by pfb can be shown by running the following command.
+```bash
+source ~/.local/lib/pfb/pfb.sh
+```
 
-`source ./pfb.sh && pfb test`
+For portability across install methods, use a path fallback:
+
+```bash
+for _pfb in \
+    "$(brew --prefix 2>/dev/null)/lib/pfb/pfb.sh" \
+    /usr/local/lib/pfb/pfb.sh \
+    /usr/lib/pfb/pfb.sh \
+    ~/.local/lib/pfb/pfb.sh; do
+    [[ -f "$_pfb" ]] && { source "$_pfb"; unset _pfb; break; }
+done
+```
+
+An example of the output pfb produces can be shown with:
+
+`source ~/.local/lib/pfb/pfb.sh && pfb test`
 
 ### Configuration
 
