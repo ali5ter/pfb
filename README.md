@@ -12,14 +12,23 @@
 
 ## Installation
 
-### One-line installer (recommended)
+### Homebrew (macOS)
+
+```bash
+brew tap ali5ter/pfb
+brew install pfb
+```
+
+Installs `pfb.sh` to `$(brew --prefix)/lib/pfb/pfb.sh`.
+
+### One-line installer (Linux / macOS without Homebrew)
 
 ```bash
 curl -sL https://raw.githubusercontent.com/ali5ter/pfb/main/install.sh | bash
 ```
 
-This installs `pfb.sh` to `~/.local/lib/pfb/pfb.sh` and prints the `source` line to add to your scripts.
-Re-running is safe — the installer is idempotent.
+Installs `pfb.sh` to `~/.local/lib/pfb/pfb.sh`. When Homebrew is present the installer
+delegates to `brew` automatically. Re-running is safe — the installer is idempotent.
 
 ### Git submodule
 

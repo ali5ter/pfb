@@ -2,7 +2,7 @@
 # @file install.sh
 # Install pfb (pretty feedback for bash) to a canonical system location.
 # @author Alister Lewis-Bowen <alister@lewis-bowen.org>
-# @version 1.0.0
+# @version 1.1.0
 # @date 2026-04-23
 # @license MIT
 # @usage curl -sL https://raw.githubusercontent.com/ali5ter/pfb/main/install.sh | bash
@@ -61,6 +61,22 @@ _local_pfb() {
 
 main() {
     printf "\npfb installer\n\n"
+
+    # --- Delegate to Homebrew if available ------------------------------------
+    if command -v brew &>/dev/null; then
+        _msg info "Homebrew detected — installing via tap"
+        brew tap ali5ter/pfb 2>&1 | sed 's/^/  /'
+        brew install pfb 2>&1 | sed 's/^/  /'
+        local brew_path
+        brew_path="$(brew --prefix)/lib/pfb/pfb.sh"
+        if [[ -f "$brew_path" ]]; then
+            _msg ok "installed via Homebrew → ${brew_path}"
+            printf "\nAdd this line to your script to source pfb:\n\n"
+            printf "  source \"%s\"\n\n" "$brew_path"
+            return 0
+        fi
+        _msg warn "Homebrew install did not produce expected file — falling back to direct install"
+    fi
 
     # --- Resolve source -------------------------------------------------------
     local local_path use_local=false
