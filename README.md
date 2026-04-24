@@ -26,7 +26,7 @@ To install manually:
 sudo dpkg -i pfb_<version>_all.deb
 ```
 
-Installs `pfb.sh` to `/usr/lib/pfb/pfb.sh`.
+Installs pfb to `/usr/bin/pfb`.
 
 ### Homebrew (macOS)
 
@@ -35,7 +35,7 @@ brew tap ali5ter/pfb
 brew install pfb
 ```
 
-Installs `pfb.sh` to `$(brew --prefix)/lib/pfb/pfb.sh`.
+Installs pfb to `$(brew --prefix)/bin/pfb`.
 
 ### One-line installer (Linux / macOS without Homebrew)
 
@@ -43,7 +43,7 @@ Installs `pfb.sh` to `$(brew --prefix)/lib/pfb/pfb.sh`.
 curl -sL https://raw.githubusercontent.com/ali5ter/pfb/main/install.sh | bash
 ```
 
-Installs `pfb.sh` to `~/.local/lib/pfb/pfb.sh`. When Homebrew is present the installer
+Installs pfb to `~/.local/bin/pfb`. When Homebrew is present the installer
 delegates to `brew` automatically. Re-running is safe — the installer is idempotent.
 
 ### Git submodule
@@ -54,7 +54,7 @@ For projects that pin pfb at a specific version:
 git submodule add https://github.com/ali5ter/pfb lib/pfb
 ```
 
-Then source it in your scripts with `source lib/pfb/pfb.sh`.
+Then source it in your scripts with `source lib/pfb/pfb.sh` or run it directly as `lib/pfb/pfb.sh`.
 
 ### Manual
 
@@ -62,27 +62,29 @@ Download `pfb.sh` from a [GitHub release](https://github.com/ali5ter/pfb/release
 
 ## Usage
 
-Source pfb in your scripts:
+After installing, pfb is available as a command:
 
 ```bash
-source ~/.local/lib/pfb/pfb.sh
+pfb info "Hello from pfb"
+pfb test  # interactive demo of all features
+```
+
+To use pfb's helper functions and color variables inside a script, source it:
+
+```bash
+source "$(command -v pfb)"
 ```
 
 For portability across install methods, use a path fallback:
 
 ```bash
 for _pfb in \
-    "$(brew --prefix 2>/dev/null)/lib/pfb/pfb.sh" \
-    /usr/local/lib/pfb/pfb.sh \
-    /usr/lib/pfb/pfb.sh \
-    ~/.local/lib/pfb/pfb.sh; do
+    "$(brew --prefix 2>/dev/null)/bin/pfb" \
+    /usr/bin/pfb \
+    ~/.local/bin/pfb; do
     [[ -f "$_pfb" ]] && { source "$_pfb"; unset _pfb; break; }
 done
 ```
-
-An example of the output pfb produces can be shown with:
-
-`source ~/.local/lib/pfb/pfb.sh && pfb test`
 
 ### Configuration
 
@@ -97,7 +99,7 @@ pfb can be configured using environment variables:
 | `PFB_NON_INTERACTIVE` | (unset) | Set to `1` to auto-answer prompts with defaults (CI, cron, scripts) |
 | `NO_COLOR` | (unset) | Disable colors (see [no-color.org](https://no-color.org)) |
 | `PFB_NO_COLOR` | `0` | pfb-specific color disable (set to `1` to disable) |
-| `PFB_FORCE_COLOR` | (unset) | Force colors even when not a TTY (must be set before sourcing) |
+| `PFB_FORCE_COLOR` | (unset) | Force colors even when not a TTY (must be exported before running pfb) |
 
 Example:
 
@@ -105,7 +107,7 @@ Example:
 export PFB_SPINNER_STYLE=13
 export PFB_DEFAULT_LOG_DIR="/var/log/myscripts"
 export NO_COLOR=1  # Disable colors for accessibility
-source ./pfb.sh
+pfb info "Colors disabled"
 ```
 
 ### Log levels
@@ -273,12 +275,12 @@ one line. For simple text input, use `pfb input` instead.
 
 ## Helper functions and variables
 
-Cursor helper functions and color variables are available **immediately after sourcing** `pfb.sh`
-— no prior `pfb` call is required.
+Cursor helper functions and color variables are available when pfb is sourced into your script.
+Use `source "$(command -v pfb)"` to load them — no prior `pfb` call is required.
 
 > **Note:** Color variables (`INFO_COLOR`, `BOLD`, `RESET`, etc.) are set to ANSI codes only when
 > stdout is a TTY at source time. In CI or piped contexts, set `PFB_FORCE_COLOR=1` **before**
-> sourcing `pfb.sh` to force colors.
+> sourcing to force colors.
 
 pfb uses ANSI/VT100 Terminal Control Escape Sequences which you can use yourself:
 
@@ -342,7 +344,7 @@ additional components like file browsers, tables, pagers, and advanced text filt
 
 **When to use pfb:**
 
-- Zero dependencies - just source a single bash file (~10KB)
+- Zero dependencies - a single bash file (~10KB) installed to your PATH
 - Maximum portability (works anywhere with bash 4.0+)
 - No external binary installation required
 - Direct function calls (no process spawning overhead)
