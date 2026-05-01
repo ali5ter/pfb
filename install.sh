@@ -92,7 +92,7 @@ main() {
     # --- Delegate to Homebrew if available ------------------------------------
     if command -v brew &>/dev/null; then
         _msg info "Homebrew detected — installing via tap"
-        brew tap ali5ter/pfb 2>&1 | sed 's/^/  /'
+        brew tap ali5ter/tap 2>&1 | sed 's/^/  /'
         brew install pfb 2>&1 | sed 's/^/  /'
         local brew_path
         brew_path="$(brew --prefix)/bin/pfb"

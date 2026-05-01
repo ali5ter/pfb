@@ -31,8 +31,7 @@ Installs pfb to `/usr/bin/pfb`.
 ### Homebrew (macOS)
 
 ```bash
-brew tap ali5ter/pfb
-brew install pfb
+brew install ali5ter/tap/pfb
 ```
 
 Installs pfb to `$(brew --prefix)/bin/pfb`.
