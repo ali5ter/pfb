@@ -2,6 +2,86 @@
 
 All notable changes to pfb are documented here.
 
+## [2.6.0] — 2026-07-20
+
+### New Features
+
+- **`PFB_PROGRESS_STYLE`** and **`pfb list-progress-styles`**: Configurable progress bar
+  gauge glyphs, mirroring the existing `PFB_SPINNER_STYLE` mechanism. Seven styles are
+  available: Blocks (`█`/`░`, default), Squares (`■`/`□`), Dots (`●`/`○`), Diamonds
+  (`◆`/`◇`), Bars (`▮`/`▯`), Shaded (`▓`/`▒`), and Claude (`▰`/`▱`). The no-color/ASCII
+  fallback (`[===   ]`) is unaffected by style selection.
+
+  ```bash
+  pfb list-progress-styles
+  PFB_PROGRESS_STYLE=6 pfb progress 34 100 "Downloading..."
+  ```
+
+## [2.5.5] — 2026-05-25
+
+### Internal
+
+- **Homebrew formula automation** (#27): A GitHub Actions release workflow now updates
+  the `ali5ter/homebrew-tap` formula automatically on `v*` tag push — it computes the
+  release tarball SHA256 and patches `Formula/pfb.rb` via `HOMEBREW_TAP_TOKEN`. Manual
+  formula edits are no longer required.
+
+## [2.5.4] — 2026-04-30
+
+### Fixed
+
+- **README install paths and usage examples** updated to reflect the `bin/` executable
+  layout introduced in v2.5.3 (was still documenting the old `lib/pfb/pfb.sh` sourcing
+  pattern).
+
+### Changed
+
+- Added `.github/FUNDING.yml` to enable the GitHub Sponsors button; fixed a stale
+  Homebrew tap reference (`ali5ter/pfb` → `ali5ter/tap`) in README and `install.sh`.
+- `CLAUDE.md` removed from git tracking and added to `.gitignore` — project AI context
+  is now managed privately in a separate `ai-context` repo.
+
+## [2.5.3] — 2026-04-23
+
+### Fixed
+
+- **Install methods now place `pfb` as an executable on `PATH`** rather than a
+  sourceable library file: curl installer → `~/.local/bin/pfb`, `.deb` → `/usr/bin/pfb`,
+  Homebrew → `$(brew --prefix)/bin/pfb`.
+- **`pfb.sh` can now be run directly as a command**, not just sourced — a
+  `BASH_SOURCE` guard at the bottom of the file dispatches to `pfb "$@"` when executed
+  directly.
+
+### Internal
+
+- Documented the release checklist (version bump, `.deb` build/upload, Homebrew
+  formula update) in `CLAUDE.md`.
+
+## [2.5.0] — 2026-04-23
+
+### New Features
+
+- **`.deb` package** (#26): `build-deb.sh` produces a Debian/Ubuntu package without
+  requiring `dpkg-deb`, using portable `ar`-format construction via `printf`/`tar`/`gzip`.
+  `install.sh` now detects `apt`/`dpkg` and downloads the `.deb` from the latest GitHub
+  Release automatically.
+
+## [2.4.0] — 2026-04-23
+
+### New Features
+
+- **Homebrew tap** (#25): Adds a Homebrew tap with a `pfb.rb` formula. `install.sh`
+  delegates to `brew` automatically when Homebrew is detected, and README lists
+  Homebrew as the primary macOS install method.
+
+## [2.3.0] — 2026-04-23
+
+### New Features
+
+- **`install.sh`** (#24): One-line curl installer, idempotent on re-run. README gains
+  an Installation section covering curl, git submodule, and manual install methods,
+  plus a portable path-fallback source snippet.
+
 ## [2.2.0] — 2026-03-21
 
 ### New Features
