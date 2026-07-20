@@ -16,6 +16,7 @@ export PFB_SPINNER_PID=""
 export PFB_SPINNER_FLAG=""
 export PFB_SPINNER_ROW=""
 export PFB_PROGRESS_ROW=""
+export PFB_PROGRESS_STYLE="0"
 
 # Require Bash 4.0+ for nameref support (local -n) used in _get_spinner_frames
 if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
@@ -539,6 +540,47 @@ pfb() {
         return 0
     }
 
+    # Get filled/empty gauge characters for the selected progress style
+    _get_progress_chars() {
+        # shellcheck disable=SC2034
+        local prog_style_0=( "█" "░" )
+        # shellcheck disable=SC2034
+        local prog_style_1=( "■" "□" )
+        # shellcheck disable=SC2034
+        local prog_style_2=( "●" "○" )
+        # shellcheck disable=SC2034
+        local prog_style_3=( "◆" "◇" )
+        # shellcheck disable=SC2034
+        local prog_style_4=( "▮" "▯" )
+        # shellcheck disable=SC2034
+        local prog_style_5=( "▓" "▒" )
+        # shellcheck disable=SC2034
+        local prog_style_6=( "▰" "▱" )
+
+        local style=${PFB_PROGRESS_STYLE:-0}
+
+        # Validate progress style range
+        if ! [[ "$style" =~ ^[0-9]+$ ]] || [[ $style -lt 0 ]] || [[ $style -gt 6 ]]; then
+            echo "pfb: invalid progress style '$style' (valid range: 0-6)" >&2
+            echo "Using default progress style 0" >&2
+            style=0
+        fi
+
+        local -n chars_ref="prog_style_${style}"
+        printf '%s\n' "${chars_ref[@]}"
+    }
+
+    # List available progress bar styles
+    _list_progress_styles() {
+        echo "0: Blocks (default)"
+        echo "1: Squares"
+        echo "2: Dots"
+        echo "3: Diamonds"
+        echo "4: Bars"
+        echo "5: Shaded"
+        echo "6: Claude"
+    }
+
     # Render a determinate progress bar.
     # @param current  number of items completed (non-negative integer)
     # @param total    total number of items (positive integer)
@@ -581,8 +623,10 @@ pfb() {
         # Build output string
         local prog_out
         if [[ -n "${RESET}" ]]; then
-            prog_filled_str="${prog_filled_str// /█}"
-            prog_empty_str="${prog_empty_str// /░}"
+            local -a prog_chars
+            mapfile -t prog_chars < <(_get_progress_chars)
+            prog_filled_str="${prog_filled_str// /${prog_chars[0]}}"
+            prog_empty_str="${prog_empty_str// /${prog_chars[1]}}"
             prog_out="${prog_label_colored}${SUCCESS_COLOR}${prog_filled_str}${DIM}${prog_empty_str}${RESET} ${BOLD}${prog_pct_str}${RESET}${prog_msg_part}"
         else
             # Shrink bar by 2 to account for the [ ] brackets in no-color mode
@@ -746,6 +790,21 @@ pfb() {
 
         sleep 2 && clear
 
+        pfb heading "Progress bar styles:"
+        pfb subheading "Available progress styles (set PFB_PROGRESS_STYLE=N):"
+        mapfile -t progress_names < <(_list_progress_styles)
+        echo
+        for i in "${!progress_names[@]}"; do
+            PFB_PROGRESS_STYLE=$i
+            for (( j=1; j<=20; j++ )); do
+                pfb progress "$j" 20 "${progress_names[$i]}"
+                sleep 0.03
+            done
+        done
+        unset PFB_PROGRESS_STYLE
+
+        sleep 2 && clear
+
         pfb heading "Confirm prompts:"
         pfb subheading "Use left/right arrows, y/n, or enter to select. Returns 0 for yes, 1 for no."
         echo
@@ -802,7 +861,7 @@ pfb() {
             "spinner" "wait" "wait-stop" "progress"
             "confirm" "input" "select" "select-from"
             "prompt" "answer"
-            "test" "list-spinner-styles" "logfile"
+            "test" "list-spinner-styles" "list-progress-styles" "logfile"
             "help" "version"
         )
 
@@ -869,6 +928,7 @@ pfb() {
 
    test                    Run interactive demo
    list-spinner-styles     Show available spinner styles
+   list-progress-styles    Show available progress bar styles
    logfile                 Show log file path
 
  Options:
@@ -879,6 +939,7 @@ pfb() {
  Environment Variables:
    PFB_SPINNER_STYLE      Spinner animation style (0-17, default: 2)
    PFB_SPINNER_LABEL      Spinner prefix label (default: wait, empty = no prefix)
+   PFB_PROGRESS_STYLE     Progress bar gauge style (0-6, default: 0)
    PFB_DEFAULT_LOG_DIR    Log directory (default: $HOME/logs)
    PFB_DEFAULT_LOG        Log basename (default: scripts)
    PFB_NON_INTERACTIVE    Set to 1 to auto-answer prompts (CI/non-TTY)
@@ -1171,6 +1232,9 @@ EOF
             ;;
         list-spinner-styles)
             _list_spinner_styles
+            ;;
+        list-progress-styles)
+            _list_progress_styles
             ;;
         logfile)
             _logfile

@@ -17,7 +17,7 @@ Sleep 5s
 Sleep 9s
 
 # Section 4: Spinner styles (18 spinners × 2s each = 36s, then 2s pause)
-Sleep 40s
+Sleep 35s
 
 # Section 5: Text input
 # Wait for "What's your name?" prompt, then type response
@@ -47,7 +47,10 @@ Sleep 5s
 # Section 8: Progress bar (30 steps × 0.1s each = 3s + 2s pause)
 Sleep 7s
 
-# Section 9: Confirmation prompt
+# Section 9: Progress bar styles (7 styles × 20 steps × 0.03s each ≈ 4s, then 2s pause)
+Sleep 9s
+
+# Section 10: Confirmation prompt
 # Toggle with arrows to show interaction, then confirm
 Sleep 1s
 Right      # Switch to "No"

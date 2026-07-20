@@ -93,6 +93,7 @@ pfb can be configured using environment variables:
 | :------- | :------ | :---------- |
 | `PFB_SPINNER_STYLE` | `2` | Spinner style (0-17). Run `pfb test` to see all styles |
 | `PFB_SPINNER_LABEL` | `wait` | Spinner/progress prefix label. Set to empty string to suppress the prefix |
+| `PFB_PROGRESS_STYLE` | `0` | Progress bar gauge style (0-6). Run `pfb list-progress-styles` to see all styles |
 | `PFB_DEFAULT_LOG_DIR` | `$HOME/logs` | Directory where command logs are stored |
 | `PFB_DEFAULT_LOG` | `scripts` | Base name for log files (creates `$PFB_DEFAULT_LOG.log`) |
 | `PFB_NON_INTERACTIVE` | (unset) | Set to `1` to auto-answer prompts with defaults (CI, cron, scripts) |
@@ -193,6 +194,24 @@ when `NO_COLOR` is set:
 
 # No-color mode
 # [wait] [============               ]  42% Downloading...
+```
+
+The gauge glyphs used to render the bar are configurable via `PFB_PROGRESS_STYLE`, in the same way
+`PFB_SPINNER_STYLE` selects a spinner animation. Run `pfb list-progress-styles` to see the options:
+
+```text
+0: Blocks (default)
+1: Squares
+2: Dots
+3: Diamonds
+4: Bars
+5: Shaded
+6: Claude
+```
+
+```bash
+PFB_PROGRESS_STYLE=6 pfb progress 34 100 "Downloading..."
+# [wait] ▪▪▪▪▪▪▪▪▪▪▪▪○○○○○○○○○○○○○○○○○○○○○○○  34% Downloading...
 ```
 
 ### Text input
