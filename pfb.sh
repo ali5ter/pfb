@@ -15,6 +15,7 @@ export PFB_SPINNER_LABEL="wait"
 export PFB_SPINNER_PID=""
 export PFB_SPINNER_FLAG=""
 export PFB_SPINNER_ROW=""
+export PFB_SPINNER_STATE_FILE="${TMPDIR:-/tmp}/.pfb_spinner_state"
 export PFB_PROGRESS_ROW=""
 export PFB_PROGRESS_STYLE="0"
 
@@ -491,6 +492,14 @@ pfb() {
         PFB_SPINNER_PID=$!
         disown 2>/dev/null
 
+        # Persist state to disk. PFB_SPINNER_PID/_FLAG/_ROW only survive within
+        # this shell process; when `pfb spinner start` and `pfb spinner stop`
+        # run as separate invocations of the installed binary (rather than
+        # sourced into the same shell), `stop` has no way to see these
+        # exported vars. The state file lets it recover them.
+        printf '%s\n%s\n%s\n' "$PFB_SPINNER_PID" "$PFB_SPINNER_FLAG" "$PFB_SPINNER_ROW" \
+            > "$PFB_SPINNER_STATE_FILE" 2>/dev/null
+
         # Since there's no way to suppress the initial job control message
         # because `set +m`, using a subshell, and piping to /dev/null do
         # not work, move the cursor up to the initial job control message
@@ -502,28 +511,46 @@ pfb() {
 
     # Stop active spinner — MUST be synchronous
     _wait_stop() {
-        # Early exit if no spinner
-        [[ -z $PFB_SPINNER_PID ]] && return 0
+        local pid="$PFB_SPINNER_PID" flag="$PFB_SPINNER_FLAG" row="$PFB_SPINNER_ROW"
+
+        # Fall back to on-disk state when this process didn't start the
+        # spinner itself (see _wait_start for why the state file exists).
+        if [[ -z $pid && -f $PFB_SPINNER_STATE_FILE ]]; then
+            local state=()
+            mapfile -t state < "$PFB_SPINNER_STATE_FILE"
+            pid="${state[0]:-}"
+            flag="${state[1]:-}"
+            row="${state[2]:-}"
+        fi
+
+        # Early exit if no spinner, or its flag file is already gone (already stopped)
+        if [[ -z $pid ]] || { [[ -n $flag ]] && [[ ! -f $flag ]]; }; then
+            PFB_SPINNER_PID=""
+            PFB_SPINNER_FLAG=""
+            PFB_SPINNER_ROW=""
+            rm -f "$PFB_SPINNER_STATE_FILE" 2>/dev/null
+            return 0
+        fi
 
         # Remove flag file to signal stop
-        [[ -n $PFB_SPINNER_FLAG ]] && rm -f "$PFB_SPINNER_FLAG" 2>/dev/null
+        [[ -n $flag ]] && rm -f "$flag" 2>/dev/null
 
         # Wait for graceful exit (up to 0.5 seconds)
         local count=0
-        while kill -0 "$PFB_SPINNER_PID" 2>/dev/null && [[ $count -lt 10 ]]; do
+        while kill -0 "$pid" 2>/dev/null && [[ $count -lt 10 ]]; do
             sleep 0.05
             count=$((count + 1))
         done
 
         # Force kill if still running
-        if kill -0 "$PFB_SPINNER_PID" 2>/dev/null; then
-            kill -9 "$PFB_SPINNER_PID" 2>/dev/null
-            wait "$PFB_SPINNER_PID" 2>/dev/null
+        if kill -0 "$pid" 2>/dev/null; then
+            kill -9 "$pid" 2>/dev/null
+            wait "$pid" 2>/dev/null
         fi
 
         # Ensure line is cleared and cursor is on, using absolute row if available
-        if [[ -n "$PFB_SPINNER_ROW" ]]; then
-            cursor_to "$PFB_SPINNER_ROW"
+        if [[ -n "$row" ]]; then
+            cursor_to "$row"
             erase_line
         else
             erase_sol
@@ -535,6 +562,7 @@ pfb() {
         PFB_SPINNER_PID=""
         PFB_SPINNER_FLAG=""
         PFB_SPINNER_ROW=""
+        rm -f "$PFB_SPINNER_STATE_FILE" 2>/dev/null
 
         # Always return success
         return 0
