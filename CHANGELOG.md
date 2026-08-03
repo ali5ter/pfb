@@ -2,6 +2,18 @@
 
 All notable changes to pfb are documented here.
 
+## [Unreleased]
+
+### Fixes
+
+- **Spinner stop across separate process invocations**: `pfb spinner stop` (and `pfb wait-stop`)
+  now recover spinner state from a state file when `PFB_SPINNER_PID` is unset in the current
+  shell. Previously, calling `pfb spinner start` and `pfb spinner stop` as separate invocations
+  of the installed binary — rather than sourcing `pfb.sh` into one shell — left `stop` with no
+  way to see the exported PID, so it returned immediately without signaling the spinner loop to
+  exit. The loop, already disowned, kept running in the background indefinitely, leaking a
+  process and a `/tmp/pfb_spinner_*` flag file per invocation.
+
 ## [2.6.0] — 2026-07-20
 
 ### New Features
