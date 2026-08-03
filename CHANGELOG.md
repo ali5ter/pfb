@@ -2,7 +2,7 @@
 
 All notable changes to pfb are documented here.
 
-## [Unreleased]
+## [2.6.1] — 2026-08-03
 
 ### Fixes
 
