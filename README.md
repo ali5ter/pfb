@@ -1,7 +1,7 @@
-# pfb
+# pfb - Pretty Feedback for Bash
 
 <p align="center">
-  <img src="assets/pfb-hero.png" width="800" alt="pfb – pretty feedback for bash scripts">
+  <img src="assets/pfb-hero.png" width="100%" alt="pfb – pretty feedback for bash scripts">
 </p>
 <p align="center">
   <strong>Pretty feedback for Bash scripts.</strong><br>
